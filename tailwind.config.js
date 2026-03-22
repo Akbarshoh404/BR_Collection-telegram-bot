@@ -24,7 +24,33 @@ export default {
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'serif'],
         sans: ['"DM Sans"', 'sans-serif']
-      }
+      },
+      animation: {
+        shimmer: 'shimmer 3s infinite',
+        'fade-in': 'fadeIn 0.5s ease-in',
+        'slide-up': 'slideUp 0.3s ease-out',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      boxShadow: {
+        'luxury': '0 20px 60px rgba(0, 0, 0, 0.08)',
+        'luxury-lg': '0 30px 90px rgba(0, 0, 0, 0.12)',
+      },
+      backdropBlur: {
+        'xs': '2px',
+      },
     },
   },
   plugins: [],

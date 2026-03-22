@@ -19,4 +19,121 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Luxury utilities */
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20;
+  }
+
+  .luxury-shadow {
+    @apply shadow-[0_20px_60px_rgba(0,0,0,0.08)];
+  }
+
+  .luxury-shadow-lg {
+    @apply shadow-[0_30px_90px_rgba(0,0,0,0.12)];
+  }
+
+  .gradient-gold {
+    @apply bg-gradient-to-r from-accent-gold via-accent-gold/80 to-accent-gold;
+  }
+
+  .gradient-dark {
+    @apply bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A];
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-accent-gold to-accent-gold/70 bg-clip-text text-transparent;
+  }
+
+  .smooth-transition {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-hover {
+    @apply hover:shadow-luxury hover:scale-[1.02] smooth-transition;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:scale-95 transition-transform;
+  }
+
+  .btn-gold {
+    @apply px-6 py-3 bg-accent-gold text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(184,149,42,0.3)] active:scale-95 transition-transform;
+  }
+
+  .input-luxury {
+    @apply w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[15px] font-bold text-primary transition-colors shadow-sm;
+  }
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Image optimization */
+img {
+  @apply select-none;
+}
+
+/* Remove default focus outline and add custom */
+:focus-visible {
+  @apply outline-none ring-2 ring-accent-gold ring-offset-2;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-text-muted;
 }

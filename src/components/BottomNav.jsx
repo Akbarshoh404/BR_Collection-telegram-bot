@@ -10,7 +10,7 @@ const BottomNav = () => {
   const { cart } = useContext(AppContext);
 
   const tabs = [
-    { name: 'Home', path: '/', icon: <Home size={22} strokeWidth={2} /> },
+    { name: 'Home', path: '/home', icon: <Home size={22} strokeWidth={2} /> },
     { name: 'Wishlist', path: '/wishlist', icon: <Heart size={22} strokeWidth={2} /> },
     { name: 'Cart', path: '/cart', icon: <div className="relative"><ShoppingBag size={22} strokeWidth={2} />{cart.length > 0 && <span className="absolute -top-1.5 -right-1.5 bg-accent-gold text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm">{cart.length}</span>}</div> },
     { name: 'Profile', path: '/profile', icon: <User size={22} strokeWidth={2} /> }
@@ -21,22 +21,26 @@ const BottomNav = () => {
       {tabs.map((tab) => {
         const isActive = location.pathname === tab.path || (tab.path === '/profile' && location.pathname.includes('/profile'));
         return (
-          <button 
+          <motion.button
             key={tab.name}
             onClick={() => navigate(tab.path)}
+            whileTap={{ scale: 0.92 }}
             className={`flex flex-col items-center p-2 pt-0 pb-4 relative transition-colors duration-300 w-16 ${isActive ? 'text-primary' : 'text-text-muted hover:text-text-secondary'}`}
           >
             {isActive && (
-              <motion.div 
+              <motion.div
                 layoutId="navTab"
-                className="absolute -top-3 w-10 h-1 bg-accent-gold rounded-b-full shadow-[0_2px_8px_rgba(184,149,42,0.4)]" 
+                className="absolute -top-3 w-10 h-1 bg-accent-gold rounded-b-full shadow-[0_2px_8px_rgba(184,149,42,0.4)]"
               />
             )}
-            <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1 text-accent-gold' : ''}`}>
+            <motion.div 
+              className={`transition-transform duration-300 ${isActive ? '-translate-y-1 text-accent-gold' : ''}`}
+              animate={isActive ? { scale: 1.1 } : { scale: 1 }}
+            >
               {tab.icon}
-            </div>
+            </motion.div>
             <span className={`text-[10px] mt-1.5 font-bold transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-0 -translate-y-2 absolute'}`}>{tab.name}</span>
-          </button>
+          </motion.button>
         );
       })}
     </div>

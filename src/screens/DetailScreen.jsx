@@ -11,6 +11,7 @@ const DetailScreen = () => {
   const navigate = useNavigate();
   const { products, categories, getProductPrice, saleActive, salePercent, addToCart, favorites, toggleFavorite } = useContext(AppContext);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const product = products.find(p => p.id === id);
 
@@ -25,7 +26,14 @@ const DetailScreen = () => {
     }
   }, [navigate]);
 
-  if (!product) return <div className="p-4 flex h-screen items-center justify-center text-lg font-serif">Product not found.</div>;
+  if (!product) return (
+    <div className="p-4 flex h-screen items-center justify-center text-lg font-serif">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+        <p className="text-text-secondary mb-4">Product not found.</p>
+        <button onClick={() => navigate(-1)} className="btn-primary">Go Back</button>
+      </motion.div>
+    </div>
+  );
 
   const price = getProductPrice(product);
   const hasDiscount = saleActive || product.sale > 0;
@@ -33,7 +41,6 @@ const DetailScreen = () => {
   const discountLabel = isGlobalSale ? `-${salePercent}%` : `-${product.sale}%`;
   const isFavorite = favorites.includes(product.id);
   const categoryName = categories.find(c => c.id === product.category)?.name || product.category;
-  
   const isOutOfStock = product.stock === 0;
 
   const handleAddToCart = () => {
@@ -49,7 +56,7 @@ const DetailScreen = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '-20%', opacity: 0 }}
@@ -57,25 +64,43 @@ const DetailScreen = () => {
       className="min-h-screen bg-surface pb-32"
     >
       <div className="relative h-[65vh] w-full bg-muted/10 rounded-b-[40px] overflow-hidden shadow-sm">
-        <button 
+        <motion.button
           onClick={() => navigate(-1)}
+          whileTap={{ scale: 0.9 }}
           className="absolute top-4 left-4 z-20 w-11 h-11 bg-black/20 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform"
         >
           <ChevronLeft size={26} strokeWidth={2} />
-        </button>
-        <button 
+        </motion.button>
+
+        <motion.button
           onClick={() => toggleFavorite(product.id)}
+          whileTap={{ scale: 0.9 }}
           className="absolute top-4 right-4 z-20 w-11 h-11 bg-white/90 backdrop-blur-md border border-border/50 rounded-full flex items-center justify-center text-primary shadow-lg active:scale-90 transition-transform"
         >
           <Heart size={22} fill={isFavorite ? '#D94F3D' : 'none'} color={isFavorite ? '#D94F3D' : 'currentColor'} strokeWidth={isFavorite ? 0 : 2} />
-        </button>
+        </motion.button>
+
+        <motion.img 
+          src={`https://picsum.photos/seed/${product.id}BR/800/1200`} 
+          alt={product.name} 
+          className="w-full h-full object-cover"
+          onLoad={() => setImageLoaded(true)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: imageLoaded ? 1 : 0 }}
+        />
         
-        <img src={`https://picsum.photos/seed/${product.id}BR/800/1200`} alt={product.name} className="w-full h-full object-cover" />
-        
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-muted/10 animate-pulse" />
+        )}
+
         {hasDiscount && (
-          <div className="absolute bottom-6 left-6 bg-error text-white text-[11px] uppercase tracking-widest font-bold px-4 py-1.5 rounded-full shadow-[0_4px_12px_rgba(217,79,61,0.4)]">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="absolute bottom-6 left-6 bg-error text-white text-[11px] uppercase tracking-widest font-bold px-4 py-1.5 rounded-full shadow-[0_4px_12px_rgba(217,79,61,0.4)]"
+          >
             Sale {discountLabel}
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -90,7 +115,7 @@ const DetailScreen = () => {
         </div>
 
         <h1 className="text-3xl font-serif font-bold leading-[1.1] mb-3 text-text-primary tracking-tight">{product.name}</h1>
-        
+
         <div className="flex items-end space-x-3 mb-6">
           <span className="text-[26px] font-bold text-text-primary tracking-tight">
             {formatPrice(price)}
@@ -113,13 +138,14 @@ const DetailScreen = () => {
           </div>
           <div className="flex flex-wrap gap-3">
             {product.sizes.map(size => (
-              <button
+              <motion.button
                 key={size}
                 onClick={() => setSelectedSize(size)}
-                className={`w-[52px] h-[52px] rounded-2xl border-2 transition-all flex items-center justify-center font-bold text-[15px] ${selectedSize === size ? 'border-primary bg-primary text-white shadow-lg' : 'border-border/60 bg-transparent text-text-primary hover:border-text-muted'}`}
+                whileTap={{ scale: 0.95 }}
+                className={`w-[52px] h-[52px] rounded-2xl border-2 transition-all flex items-center justify-center font-bold text-[15px] ${selectedSize === size ? 'border-primary bg-primary text-white shadow-lg scale-105' : 'border-border/60 bg-transparent text-text-primary hover:border-text-muted'}`}
               >
                 {size}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -132,33 +158,38 @@ const DetailScreen = () => {
             <span>Out of Stock</span>
           </div>
         ) : product.stock < 5 ? (
-          <div className="text-center w-full absolute -top-10 left-0">
-             <span className="bg-error text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md uppercase tracking-wide">
-               Only {product.stock} left in stock!
-             </span>
-          </div>
+          <motion.div 
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-center w-full"
+          >
+            <span className="bg-error text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md uppercase tracking-wide">
+              Only {product.stock} left in stock!
+            </span>
+          </motion.div>
         ) : null}
 
         {!isOutOfStock && (
           <div className="flex space-x-3">
-            <button 
+            <motion.button
               onClick={handleAddToCart}
               disabled={!selectedSize}
+              whileTap={{ scale: 0.95 }}
               className={`flex-1 py-4.5 h-[56px] rounded-2xl font-bold flex items-center justify-center transition-all border-2 ${selectedSize ? 'border-border text-primary hover:bg-muted/10 active:scale-95' : 'border-border/50 text-text-muted cursor-not-allowed'}`}
             >
               <ShoppingBag size={20} className="mr-2" strokeWidth={2.5} /> Add
-            </button>
-            <button 
+            </motion.button>
+            <motion.button
               onClick={handleOrderNow}
               disabled={!selectedSize}
+              whileTap={{ scale: 0.95 }}
               className={`flex-[1.5] py-4.5 h-[56px] rounded-2xl font-bold flex items-center justify-center transition-all relative overflow-hidden ${selectedSize ? 'bg-accent-gold text-white shadow-[0_8px_20px_rgba(184,149,42,0.3)] active:scale-95' : 'bg-muted text-surface cursor-not-allowed'}`}
             >
               Order Now
-            </button>
+            </motion.button>
           </div>
         )}
       </div>
-
     </motion.div>
   );
 };

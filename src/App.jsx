@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { telegram } from './utils/telegram';
 import { AppContext } from './context/AppContext';
 import { Analytics } from "@vercel/analytics/react"
-
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import OnboardingScreen from './screens/OnboardingScreen';
 import MainLayout from './screens/MainLayout';
 import HomeScreen from './screens/HomeScreen';
@@ -26,16 +26,18 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={hasSeenOnboarding ? <Navigate to="/home" /> : <OnboardingScreen />} />
         
+        {/* Main layout with bottom nav */}
         <Route element={<MainLayout />}>
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/wishlist" element={<WishlistScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
+          <Route path="/product/:id" element={<DetailScreen />} />
+          <Route path="/cart" element={<CartScreen />} />
+          <Route path="/user-orders" element={<UserOrdersScreen />} />
         </Route>
 
-        <Route path="/product/:id" element={<DetailScreen />} />
-        <Route path="/cart" element={<CartScreen />} />
+        {/* Routes without bottom nav */}
         <Route path="/confirm/:id" element={<ConfirmScreen />} />
-        <Route path="/user-orders" element={<UserOrdersScreen />} />
         <Route path="/admin" element={<AdminScreen />} />
         <Route path="/admin/orders" element={<OrdersScreen />} />
       </Routes>
@@ -56,6 +58,8 @@ function App() {
       <BrowserRouter>
         <AnimatedRoutes />
       </BrowserRouter>
+      <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
