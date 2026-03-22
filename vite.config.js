@@ -41,10 +41,26 @@ export default defineConfig(async ({ command }) => {
       },
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor': ['react', 'react-dom', 'react-router-dom'],
-            'animations': ['framer-motion'],
-            'icons': ['lucide-react'],
+          manualChunks(id) {
+            if (!id.includes('node_modules')) {
+              return
+            }
+
+            if (
+              id.includes('react') ||
+              id.includes('react-dom') ||
+              id.includes('react-router-dom')
+            ) {
+              return 'vendor'
+            }
+
+            if (id.includes('framer-motion')) {
+              return 'animations'
+            }
+
+            if (id.includes('lucide-react')) {
+              return 'icons'
+            }
           },
         },
       },
