@@ -6,7 +6,24 @@ import { AppContext } from '../context/AppContext'
 import { telegram } from '../utils/telegram'
 import { formatPrice } from '../utils/formatPrice'
 
-const paymentMethods = ['Cash on Delivery', 'Click', 'Payme', 'Card Transfer']
+const regions = [
+  'Toshkent shahri',
+  'Toshkent viloyati',
+  'Samarqand viloyati',
+  'Buxoro viloyati',
+  "Andijon viloyati",
+  "Farg'ona viloyati",
+  'Namangan viloyati',
+  'Qashqadaryo viloyati',
+  'Surxondaryo viloyati',
+  'Navoiy viloyati',
+  'Jizzax viloyati',
+  'Sirdaryo viloyati',
+  'Xorazm viloyati',
+  "Qoraqalpog'iston Respublikasi",
+]
+
+const paymentMethods = ['Online Card', 'Cash', 'Card on Delivery']
 
 const ConfirmScreen = () => {
   const { cart, clearCart, addOrder, currentUser, checkoutDraft, updateCheckoutDraft, applyPromoCode, updateCurrentUserProfile } = useContext(AppContext)
@@ -25,7 +42,10 @@ const ConfirmScreen = () => {
 
   const formIsValid = Boolean(
     cart.length &&
-      checkoutDraft.shippingAddress.trim() &&
+      checkoutDraft.fullName.trim() &&
+      checkoutDraft.region.trim() &&
+      checkoutDraft.district.trim() &&
+      checkoutDraft.specification.trim() &&
       checkoutDraft.phone.trim() &&
       checkoutDraft.paymentMethod,
   )
@@ -62,10 +82,15 @@ const ConfirmScreen = () => {
       paymentMethod: checkoutDraft.paymentMethod,
       customer: {
         telegramId: currentUser?.telegramId || 'guest',
-        firstName: currentUser?.firstName || 'Guest',
-        lastName: currentUser?.lastName || '',
+        firstName: checkoutDraft.fullName || currentUser?.firstName || 'Guest',
+        lastName: '',
+        fullName: checkoutDraft.fullName,
         phone: checkoutDraft.phone,
-        shippingAddress: checkoutDraft.shippingAddress,
+        region: checkoutDraft.region,
+        district: checkoutDraft.district,
+        specification: checkoutDraft.specification,
+        shippingAddress: `${checkoutDraft.region}, ${checkoutDraft.district}, ${checkoutDraft.specification}`,
+        estimatedDelivery: '3 days',
       },
       orderNotes: checkoutDraft.orderNotes,
     })
@@ -106,6 +131,12 @@ const ConfirmScreen = () => {
               <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Checkout Summary</span>
               <span className="text-[14px] font-bold text-success">{placedOrder.paymentMethod}</span>
             </div>
+            <div className="mb-4 rounded-[18px] bg-background border border-border/60 p-4 text-[13px] text-text-secondary leading-relaxed">
+              <p><span className="font-bold text-primary">Customer:</span> {placedOrder.customer?.fullName}</p>
+              <p className="mt-1"><span className="font-bold text-primary">Phone:</span> {placedOrder.customer?.phone}</p>
+              <p className="mt-1"><span className="font-bold text-primary">Address:</span> {placedOrder.customer?.shippingAddress}</p>
+              <p className="mt-1"><span className="font-bold text-primary">Estimated delivery:</span> {placedOrder.customer?.estimatedDelivery}</p>
+            </div>
             <div className="space-y-3">
               {placedOrder.items.map((item, index) => (
                 <div key={`${item.id}-${index}`} className="flex justify-between items-center text-[13px]">
@@ -140,15 +171,31 @@ const ConfirmScreen = () => {
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-accent-gold">Checkout</p>
         <h1 className="text-[30px] font-serif font-bold text-primary mt-2">Confirm your order details</h1>
-        <p className="text-[14px] text-text-secondary mt-2 leading-relaxed">Add delivery information, choose a payment method, apply promo codes, and leave any tailoring note before you place the order.</p>
+        <p className="text-[14px] text-text-secondary mt-2 leading-relaxed">Fill in delivery details for Uzbekistan, choose a payment type, and we will show an estimated delivery time of 3 days.</p>
       </div>
 
       <div className="space-y-4">
         <div className="rounded-[26px] border border-border/60 bg-surface p-5 space-y-4 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-2"><MapPin size={18} className="text-accent-gold" /><h2 className="font-serif text-[22px] font-bold text-primary">Delivery</h2></div>
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Shipping Address</label>
-            <textarea value={checkoutDraft.shippingAddress} onChange={(event) => updateCheckoutDraft({ shippingAddress: event.target.value })} rows={3} className="input-luxury resize-none font-medium" placeholder="Street, district, landmark, apartment" />
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Full Name</label>
+            <input value={checkoutDraft.fullName} onChange={(event) => updateCheckoutDraft({ fullName: event.target.value })} className="input-luxury font-medium" placeholder="Akbarshoh Aliyev" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Region</label>
+            <select value={checkoutDraft.region} onChange={(event) => updateCheckoutDraft({ region: event.target.value })} className="input-luxury appearance-none font-medium">
+              {regions.map((region) => (
+                <option key={region} value={region}>{region}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Tuman Nomi</label>
+            <input value={checkoutDraft.district} onChange={(event) => updateCheckoutDraft({ district: event.target.value })} className="input-luxury font-medium" placeholder="Yunusobod tumani" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Specification</label>
+            <textarea value={checkoutDraft.specification} onChange={(event) => updateCheckoutDraft({ specification: event.target.value })} rows={3} className="input-luxury resize-none font-medium" placeholder="Mavze, uy raqami, ko'cha nomi, mo'ljal" />
           </div>
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Phone Confirmation</label>
@@ -156,6 +203,9 @@ const ConfirmScreen = () => {
               <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
               <input value={checkoutDraft.phone} onChange={(event) => updateCheckoutDraft({ phone: event.target.value })} className="input-luxury pl-11 font-medium" placeholder="+998 90 123 45 67" />
             </div>
+          </div>
+          <div className="rounded-[18px] bg-background border border-border/60 p-4 text-[13px] text-text-secondary leading-relaxed">
+            <span className="font-bold text-primary">Estimated delivery:</span> 3 days
           </div>
         </div>
 
@@ -199,6 +249,11 @@ const ConfirmScreen = () => {
                 <span className="font-bold text-primary">{formatPrice(item.finalPrice)}</span>
               </div>
             ))}
+          </div>
+          <div className="rounded-[18px] bg-background border border-border/60 p-4 text-[13px] text-text-secondary leading-relaxed">
+            <p><span className="font-bold text-primary">Receiver:</span> {checkoutDraft.fullName || 'Not entered yet'}</p>
+            <p className="mt-1"><span className="font-bold text-primary">Address:</span> {[checkoutDraft.region, checkoutDraft.district, checkoutDraft.specification].filter(Boolean).join(', ') || 'Not entered yet'}</p>
+            <p className="mt-1"><span className="font-bold text-primary">Delivery estimate:</span> 3 days</p>
           </div>
           <div className="border-t border-border/50 pt-4 space-y-2">
             <div className="flex justify-between text-[13px]"><span className="text-text-secondary">Subtotal</span><span className="font-bold text-primary">{formatPrice(subtotal)}</span></div>

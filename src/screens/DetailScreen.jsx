@@ -27,6 +27,7 @@ const DetailScreen = () => {
   const [selectedColor, setSelectedColor] = useState(null)
   const [activeImage, setActiveImage] = useState('')
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [cartFeedback, setCartFeedback] = useState('')
 
   const product = products.find((item) => item.id === id)
 
@@ -89,7 +90,9 @@ const DetailScreen = () => {
       return
     }
 
-    addToCart(product, selectedSize, 1, selectedColor)
+    const added = addToCart(product, selectedSize, 1, selectedColor)
+    setCartFeedback(added ? 'Added to cart' : 'Cart updated')
+    window.setTimeout(() => setCartFeedback(''), 1800)
   }
 
   const handleOrderNow = () => {
@@ -229,10 +232,20 @@ const DetailScreen = () => {
 
               {!selectedSize && <p className="mb-4 text-[12px] font-medium text-text-secondary">Choose your size to unlock bag and checkout actions.</p>}
 
+              {cartFeedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-[13px] font-bold text-success"
+                >
+                  {cartFeedback}
+                </motion.div>
+              )}
+
               <div className="flex space-x-3">
                 <motion.button onClick={handleAddToCart} disabled={!selectedSize} whileTap={{ scale: 0.95 }} className={`flex-1 py-4.5 h-[56px] rounded-2xl font-bold flex items-center justify-center transition-all border-2 ${selectedSize ? 'border-border text-primary hover:bg-muted/10 active:scale-95 bg-surface' : 'border-border/50 bg-muted/10 text-text-muted cursor-not-allowed'}`}>
                   <ShoppingBag size={20} className="mr-2" strokeWidth={2.5} />
-                  Add to Cart
+                  {cartFeedback ? 'Added' : 'Add to Cart'}
                 </motion.button>
                 <motion.button onClick={handleOrderNow} disabled={!selectedSize} whileTap={{ scale: 0.95 }} className={`flex-[1.5] py-4.5 h-[56px] rounded-2xl font-bold flex items-center justify-center transition-all relative overflow-hidden ${selectedSize ? 'bg-accent-gold text-white shadow-[0_8px_20px_rgba(184,149,42,0.3)] active:scale-95' : 'bg-muted text-surface cursor-not-allowed'}`}>
                   Order Now

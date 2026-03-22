@@ -8,9 +8,12 @@ export const AppContext = createContext()
 const STORE_CACHE_KEY = 'br-collection-store-cache'
 const SESSION_PREFIX = 'br-collection-session-'
 const defaultCheckoutDraft = {
-  shippingAddress: '',
+  fullName: '',
+  region: 'Toshkent shahri',
+  district: '',
+  specification: '',
   phone: '+998 90 ',
-  paymentMethod: 'Cash on Delivery',
+  paymentMethod: 'Cash',
   promoCode: '',
   orderNotes: '',
 }
