@@ -1,10 +1,10 @@
-import { defineConfig } from 'vite'
+﻿import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig(async ({ command }) => {
   const plugins = [react()]
 
-  if (command === 'build') {
+  if (command === 'build' && process.platform !== 'win32') {
     try {
       const { default: compression } = await import('vite-plugin-compression')
 
@@ -46,11 +46,7 @@ export default defineConfig(async ({ command }) => {
               return
             }
 
-            if (
-              id.includes('react') ||
-              id.includes('react-dom') ||
-              id.includes('react-router-dom')
-            ) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
               return 'vendor'
             }
 
@@ -64,9 +60,7 @@ export default defineConfig(async ({ command }) => {
           },
         },
       },
-      // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,
-      // Enable source maps for production debugging
       sourcemap: false,
     },
     server: {

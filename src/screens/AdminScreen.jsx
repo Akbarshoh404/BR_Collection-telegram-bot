@@ -1,129 +1,278 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Edit2, Trash2, Plus, TrendingUp, Package, Users, Tag, Box, LogOut, Tags } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { AppContext } from '../context/AppContext';
-import { formatPrice } from '../utils/formatPrice';
-import { telegram } from '../utils/telegram';
+﻿import React, { useContext, useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowDown, ArrowUp, ChevronLeft, Edit2, ImagePlus, Package, Plus, ShieldCheck, Tags, TrendingUp, TriangleAlert, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { AppContext } from '../context/AppContext'
+import { formatPrice } from '../utils/formatPrice'
+import { telegram } from '../utils/telegram'
+import { getProductImage } from '../utils/productMedia'
+
+const parseList = (value) => value.split(',').map((item) => item.trim()).filter(Boolean)
 
 const AdminScreen = () => {
-  const { 
-    products, setProducts, orders, 
-    categories, setCategories,
-    saleActive, setSaleActive, 
-    salePercent, setSalePercent, 
-    saleMessage, setSaleMessage,
-    currentUser, becomeAdmin
-  } = useContext(AppContext);
-  const navigate = useNavigate();
+  const {
+    products,
+    setProducts,
+    orders,
+    categories,
+    setCategories,
+    saleActive,
+    setSaleActive,
+    salePercent,
+    setSalePercent,
+    saleMessage,
+    setSaleMessage,
+    currentUser,
+  } = useContext(AppContext)
+  const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | products | categories
-  
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [productSearch, setProductSearch] = useState('')
   const [productFormData, setProductFormData] = useState({
-    name: '', category: categories[0]?.id || '', price: '', description: '', sale: 0, emoji: '👕', stock: 10
-  });
+    name: '',
+    category: categories[0]?.id || '',
+    price: '',
+    description: '',
+    sale: 0,
+    stock: 0,
+    sizes: 'S, M, L, XL',
+    sizeStock: 'S:0, M:0, L:0, XL:0',
+    material: '',
+    deliveryEstimate: '',
+    careInstructions: 'Dry clean only',
+    image: '',
+    imageUpload: '',
+    colors: 'Black:#1B1B1D',
+    badges: 'best-seller',
+    featuredCollection: 'Core Essentials',
+  })
 
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '🌟' });
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '?', description: '' })
 
   useEffect(() => {
-    if (!currentUser?.isAdmin) {
-      navigate('/');
+    if (currentUser && !currentUser.isAdmin) {
+      navigate('/')
     }
-    if (telegram?.BackButton) {
-      telegram.BackButton.show();
-      const handleBack = () => navigate(-1);
-      telegram.BackButton.onClick(handleBack);
-      return () => telegram.BackButton.offClick(handleBack);
-    }
-  }, [currentUser, navigate]);
 
-  const stats = {
+    if (telegram?.BackButton) {
+      telegram.BackButton.show()
+      const handleBack = () => navigate(-1)
+      telegram.BackButton.onClick(handleBack)
+      return () => telegram.BackButton.offClick(handleBack)
+    }
+
+    return undefined
+  }, [currentUser, navigate])
+
+  const stats = useMemo(() => ({
     products: products.length,
     orders: orders.length,
-    newOrders: orders.filter(o => o.status === 'New').length,
-    revenue: orders.filter(o => o.status === 'Done').reduce((sum, order) => {
-      return sum + order.items.reduce((s, item) => s + item.finalPrice, 0);
+    newOrders: orders.filter((order) => order.status === 'New').length,
+    revenue: orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
+  }), [orders, products.length])
+
+  const lowStockProducts = useMemo(() => products.filter((product) => product.stock > 0 && product.stock <= 5), [products])
+
+  const topProducts = useMemo(
+    () => [...products].sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0)).slice(0, 4),
+    [products],
+  )
+
+  const categoryAnalytics = useMemo(() => categories.map((category) => {
+    const categoryProducts = products.filter((product) => product.category === category.id)
+    const categoryRevenue = orders.reduce((sum, order) => {
+      return sum + order.items.filter((item) => item.product.category === category.id).reduce((inner, item) => inner + item.finalPrice, 0)
     }, 0)
-  };
+
+    return {
+      ...category,
+      productCount: categoryProducts.length,
+      revenue: categoryRevenue,
+    }
+  }), [categories, orders, products])
+
+  const dateAnalytics = useMemo(() => {
+    const buckets = new Map()
+
+    orders.forEach((order) => {
+      const dateKey = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      buckets.set(dateKey, (buckets.get(dateKey) || 0) + (order.totalAmount || 0))
+    })
+
+    return [...buckets.entries()].slice(-5)
+  }, [orders])
+
+  const filteredProducts = products.filter((product) =>
+    [product.name, product.material, product.featuredCollection]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(productSearch.toLowerCase())),
+  )
 
   const handleDeleteProduct = (id) => {
-    if(window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== id));
+    if (window.confirm('Delete this product from the store?')) {
+      setProducts((prev) => prev.filter((product) => product.id !== id))
     }
-  };
+  }
 
   const handleOpenProductEdit = (product = null) => {
     if (product) {
-      setEditingProduct(product);
+      setEditingProduct(product)
       setProductFormData({
-        name: product.name, category: product.category, price: product.price,
-        description: product.description, sale: product.sale, emoji: product.emoji, stock: product.stock || 0
-      });
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        description: product.description,
+        sale: product.sale,
+        stock: product.stock,
+        sizes: product.sizes.join(', '),
+        sizeStock: Object.entries(product.sizeStock || {}).map(([size, qty]) => `${size}:${qty}`).join(', '),
+        material: product.material || '',
+        deliveryEstimate: product.deliveryEstimate || '',
+        careInstructions: (product.careInstructions || []).join(', '),
+        image: product.image || '',
+        imageUpload: '',
+        colors: (product.colors || []).map((color) => `${color.name}:${color.hex}`).join(', '),
+        badges: (product.badges || []).join(', '),
+        featuredCollection: product.featuredCollection || 'Core Essentials',
+      })
     } else {
-      setEditingProduct(null);
-      setProductFormData({ name: '', category: categories[0]?.id || '', price: '', description: '', sale: 0, emoji: '👕', stock: 10 });
+      setEditingProduct(null)
+      setProductFormData({
+        name: '',
+        category: categories[0]?.id || '',
+        price: '',
+        description: '',
+        sale: 0,
+        stock: 0,
+        sizes: 'S, M, L, XL',
+        sizeStock: 'S:0, M:0, L:0, XL:0',
+        material: '',
+        deliveryEstimate: '',
+        careInstructions: 'Dry clean only',
+        image: '',
+        imageUpload: '',
+        colors: 'Black:#1B1B1D',
+        badges: 'new',
+        featuredCollection: 'Core Essentials',
+      })
     }
-    setIsProductModalOpen(true);
-  };
 
-  const handleSaveProduct = (e) => {
-    e.preventDefault();
-    const newProduct = {
-      id: editingProduct ? editingProduct.id : 'p_' + Date.now(),
+    setIsProductModalOpen(true)
+  }
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setProductFormData((prev) => ({
+        ...prev,
+        imageUpload: reader.result,
+      }))
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSaveProduct = (event) => {
+    event.preventDefault()
+
+    const sizes = parseList(productFormData.sizes)
+    const sizeStock = parseList(productFormData.sizeStock).reduce((accumulator, chunk) => {
+      const [size, qty] = chunk.split(':').map((item) => item.trim())
+      if (size) {
+        accumulator[size] = Number(qty || 0)
+      }
+      return accumulator
+    }, {})
+    const colors = parseList(productFormData.colors).map((chunk, index) => {
+      const [name, hex = '#1B1B1D'] = chunk.split(':').map((item) => item.trim())
+      return {
+        id: `${name.toLowerCase().replace(/\s+/g, '-')}-${index}`,
+        name,
+        hex,
+        image: productFormData.imageUpload || productFormData.image || editingProduct?.image || '',
+      }
+    })
+
+    const nextProduct = {
+      ...(editingProduct || {}),
+      id: editingProduct ? editingProduct.id : `p_${Date.now()}`,
       name: productFormData.name,
       category: productFormData.category,
       price: Number(productFormData.price),
       description: productFormData.description,
       sale: Number(productFormData.sale),
-      emoji: productFormData.emoji,
       stock: Number(productFormData.stock),
-      sizes: ["S", "M", "L", "XL"]
-    };
-
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === newProduct.id ? newProduct : p));
-    } else {
-      setProducts([newProduct, ...products]);
+      sizes,
+      sizeStock,
+      material: productFormData.material,
+      deliveryEstimate: productFormData.deliveryEstimate,
+      careInstructions: parseList(productFormData.careInstructions),
+      image: productFormData.imageUpload || productFormData.image,
+      gallery: [productFormData.imageUpload || productFormData.image].filter(Boolean),
+      colors,
+      badges: parseList(productFormData.badges),
+      featuredCollection: productFormData.featuredCollection,
+      rating: editingProduct?.rating || 4.8,
+      reviewsCount: editingProduct?.reviewsCount || 0,
+      reviews: editingProduct?.reviews || [],
+      createdAt: editingProduct?.createdAt || new Date().toISOString(),
+      salesCount: editingProduct?.salesCount || 0,
+      emoji: editingProduct?.emoji || '???',
     }
-    setIsProductModalOpen(false);
-  };
 
-  const handleSaveCategory = (e) => {
-    e.preventDefault();
-    const newCat = {
-      id: 'cat_' + Date.now(),
+    setProducts((prev) => editingProduct ? prev.map((product) => (product.id === nextProduct.id ? nextProduct : product)) : [nextProduct, ...prev])
+    setIsProductModalOpen(false)
+  }
+
+  const handleSaveCategory = (event) => {
+    event.preventDefault()
+
+    const nextCategory = {
+      id: `cat_${Date.now()}`,
       name: categoryFormData.name,
-      icon: categoryFormData.icon
-    };
-    setCategories([...categories, newCat]);
-    setIsCategoryModalOpen(false);
-  };
+      icon: categoryFormData.icon,
+      description: categoryFormData.description,
+    }
+
+    setCategories((prev) => [...prev, nextCategory])
+    setCategoryFormData({ name: '', icon: '?', description: '' })
+    setIsCategoryModalOpen(false)
+  }
+
+  const moveCategory = (index, direction) => {
+    setCategories((prev) => {
+      const next = [...prev]
+      const target = next[index]
+      const swapIndex = index + direction
+      if (!target || !next[swapIndex]) {
+        return prev
+      }
+      next[index] = next[swapIndex]
+      next[swapIndex] = target
+      return next
+    })
+  }
 
   return (
-    <motion.div 
-      initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '-30%', opacity: 0 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="min-h-screen bg-background pb-20"
-    >
+    <motion.div initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '-30%', opacity: 0 }} transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }} className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center justify-between shadow-sm">
         <button onClick={() => navigate(-1)} className="text-text-primary p-2 -ml-2 rounded-full hover:bg-muted/10 transition-colors">
           <ChevronLeft size={24} strokeWidth={2} />
         </button>
-        <h1 className="font-serif text-[20px] font-bold">Admin Panel</h1>
+        <h1 className="font-serif text-[20px] font-bold">Admin Studio</h1>
         <div className="w-8"></div>
       </header>
 
-      {/* Tabs */}
       <div className="bg-surface border-b border-border/50 px-4 py-3 flex justify-between space-x-2 shadow-[0_4px_10px_rgba(0,0,0,0.02)] sticky top-[60px] z-30">
-        {['dashboard', 'products', 'categories'].map(tab => (
-          <button 
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === tab ? 'bg-primary text-white shadow-md' : 'bg-transparent text-text-secondary border border-border/60 hover:bg-muted/10'}`}
-          >
+        {['dashboard', 'products', 'categories'].map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === tab ? 'bg-primary text-white shadow-md' : 'bg-transparent text-text-secondary border border-border/60 hover:bg-muted/10'}`}>
             {tab}
           </button>
         ))}
@@ -134,19 +283,19 @@ const AdminScreen = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-surface border border-border/60 rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
-                <Box size={24} className="text-text-secondary mb-2" strokeWidth={1.5} />
+                <Package size={24} className="text-text-secondary mb-2" strokeWidth={1.5} />
                 <div className="text-3xl font-bold text-primary tracking-tight">{stats.products}</div>
                 <div className="text-[10px] font-bold tracking-widest uppercase text-text-secondary mt-1">Products</div>
               </div>
               <div className="bg-surface border border-border/60 rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
-                <Package size={24} className="text-text-secondary mb-2" strokeWidth={1.5} />
+                <Users size={24} className="text-text-secondary mb-2" strokeWidth={1.5} />
                 <div className="text-3xl font-bold text-primary tracking-tight">{stats.orders}</div>
-                <div className="text-[10px] font-bold tracking-widest uppercase text-text-secondary mt-1">Total Orders</div>
+                <div className="text-[10px] font-bold tracking-widest uppercase text-text-secondary mt-1">Orders</div>
               </div>
               <div className="bg-surface border border-border/60 rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
-                <Users size={24} className="text-error mb-2" strokeWidth={1.5} />
-                <div className="text-3xl font-bold text-error tracking-tight">{stats.newOrders}</div>
-                <div className="text-[10px] font-bold tracking-widest uppercase text-error mt-1">Pending</div>
+                <TriangleAlert size={24} className="text-error mb-2" strokeWidth={1.5} />
+                <div className="text-3xl font-bold text-error tracking-tight">{lowStockProducts.length}</div>
+                <div className="text-[10px] font-bold tracking-widest uppercase text-error mt-1">Low Stock</div>
               </div>
               <div className="bg-surface border border-border/60 rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
                 <TrendingUp size={24} className="text-success mb-2" strokeWidth={1.5} />
@@ -155,49 +304,107 @@ const AdminScreen = () => {
               </div>
             </div>
 
-            <button 
-              onClick={() => navigate('/admin/orders')}
-              className="w-full bg-primary text-white border border-border/60 rounded-[20px] p-5 shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center justify-between active:scale-95 transition-all"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/10 p-2.5 rounded-xl">
-                  <Package size={20} className="text-white" />
-                </div>
-                <span className="font-bold text-[16px]">Manage Orders</span>
+            <div className="rounded-[28px] bg-surface border border-border/60 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)] space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif font-bold text-[24px] text-primary">Live promotion controls</h3>
+                <button onClick={() => setSaleActive((value) => !value)} className={`px-4 py-2 rounded-full text-[12px] font-bold ${saleActive ? 'bg-primary text-white' : 'bg-background border border-border/60 text-primary'}`}>
+                  {saleActive ? 'Sale Active' : 'Start Sale'}
+                </button>
               </div>
-              <div className="flex items-center space-x-2">
-                {stats.newOrders > 0 && (
-                  <span className="bg-error shadow-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">{stats.newOrders} New</span>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="rounded-[20px] border border-border/60 bg-background p-4 text-[12px] font-bold text-text-secondary">
+                  <span className="block mb-2 uppercase tracking-widest text-[10px]">Discount Percent</span>
+                  <input type="number" min="0" max="80" value={salePercent} onChange={(event) => setSalePercent(Number(event.target.value))} className="w-full bg-transparent text-primary text-[16px] font-bold outline-none" />
+                </label>
+                <label className="rounded-[20px] border border-border/60 bg-background p-4 text-[12px] font-bold text-text-secondary">
+                  <span className="block mb-2 uppercase tracking-widest text-[10px]">Campaign Message</span>
+                  <input value={saleMessage} onChange={(event) => setSaleMessage(event.target.value)} className="w-full bg-transparent text-primary text-[13px] font-bold outline-none" />
+                </label>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="rounded-[28px] bg-surface border border-border/60 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
+                <div className="flex items-center gap-2 mb-4"><TriangleAlert size={18} className="text-error" /><h3 className="font-serif font-bold text-[22px] text-primary">Low-stock alerts</h3></div>
+                {lowStockProducts.length === 0 ? (
+                  <p className="text-[13px] text-text-secondary">Everything looks healthy right now.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {lowStockProducts.map((product) => (
+                      <div key={product.id} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-primary">{product.name}</p>
+                          <p className="text-[12px] text-text-secondary mt-1">{product.stock} total left • {Object.entries(product.sizeStock || {}).map(([size, qty]) => `${size}:${qty}`).join(', ')}</p>
+                        </div>
+                        <button onClick={() => handleOpenProductEdit(product)} className="px-3 py-2 rounded-full bg-primary text-white text-[12px] font-bold">Restock</button>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <ChevronLeft size={20} className="rotate-180 text-white/50" />
               </div>
-            </button>
+
+              <div className="rounded-[28px] bg-surface border border-border/60 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
+                <div className="flex items-center gap-2 mb-4"><TrendingUp size={18} className="text-accent-gold" /><h3 className="font-serif font-bold text-[22px] text-primary">Analytics by product and category</h3></div>
+                <div className="space-y-3 mb-5">
+                  {topProducts.map((product) => (
+                    <div key={product.id} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-primary">{product.name}</p>
+                        <p className="text-[12px] text-text-secondary mt-1">{product.salesCount || 0} units sold</p>
+                      </div>
+                      <span className="text-[12px] font-bold text-accent-gold">{product.featuredCollection}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid gap-3">
+                  {categoryAnalytics.map((category) => (
+                    <div key={category.id} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-primary">{category.icon} {category.name}</p>
+                        <p className="text-[12px] text-text-secondary mt-1">{category.productCount} products</p>
+                      </div>
+                      <span className="text-[12px] font-bold text-success">{formatPrice(category.revenue)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] bg-surface border border-border/60 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
+                <div className="flex items-center gap-2 mb-4"><ShieldCheck size={18} className="text-accent-gold" /><h3 className="font-serif font-bold text-[22px] text-primary">Revenue by date</h3></div>
+                <div className="grid gap-3">
+                  {dateAnalytics.length === 0 ? (
+                    <p className="text-[13px] text-text-secondary">Revenue will appear here after the first placed order.</p>
+                  ) : (
+                    dateAnalytics.map(([date, revenue]) => (
+                      <div key={date} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center justify-between">
+                        <span className="font-bold text-primary">{date}</span>
+                        <span className="text-[12px] font-bold text-success">{formatPrice(revenue)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 
         {activeTab === 'products' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="font-serif font-bold text-xl">All Products</h3>
-              <button 
-                onClick={() => handleOpenProductEdit()}
-                className="text-[12px] bg-primary text-white px-4 py-2 rounded-full font-bold flex items-center space-x-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95 transition-all"
-              >
+            <div className="flex justify-between items-center mb-5 gap-3">
+              <input value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder="Search products, fabric, or collection" className="input-luxury flex-1 text-[14px]" />
+              <button onClick={() => handleOpenProductEdit()} className="text-[12px] bg-primary text-white px-4 py-3 rounded-full font-bold flex items-center space-x-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95 transition-all">
                 <Plus size={16} strokeWidth={3} /> <span>Create</span>
               </button>
             </div>
-            
+
             <div className="space-y-4">
-              {products.map(product => (
+              {filteredProducts.map((product) => (
                 <div key={product.id} className="bg-surface border border-border/60 rounded-[24px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex items-center space-x-4 relative overflow-hidden">
-                  <div className="w-[52px] h-[52px] bg-muted/10 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-border/40">
-                    {product.emoji}
-                  </div>
+                  <img src={getProductImage(product)} alt={product.name} className="w-[70px] h-[84px] object-cover rounded-2xl border border-border/40" />
                   <div className="flex-1 overflow-hidden pr-2">
                     <h4 className="text-[14px] font-bold truncate leading-tight text-primary">{product.name}</h4>
-                    <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mt-1.5">
-                      {categories.find(c => c.id === product.category)?.name || 'Misc'} • Stock: <span className={product.stock === 0 ? 'text-error' : 'text-success'}>{product.stock}</span>
-                    </p>
+                    <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mt-1.5">{categories.find((category) => category.id === product.category)?.name || 'Misc'} • Stock: <span className={product.stock === 0 ? 'text-error' : 'text-success'}>{product.stock}</span></p>
+                    <p className="text-[12px] text-text-secondary mt-1 truncate">{product.material}</p>
                     <p className="text-[13px] font-black tracking-tight text-accent-gold mt-1">{formatPrice(product.price)}</p>
                   </div>
                   <div className="flex flex-col space-y-2">
@@ -205,7 +412,7 @@ const AdminScreen = () => {
                       <Edit2 size={16} strokeWidth={2} />
                     </button>
                     <button onClick={() => handleDeleteProduct(product.id)} className="p-2 text-text-secondary hover:text-error transition-colors bg-background rounded-xl border border-border/70 shadow-sm active:scale-90">
-                      <Trash2 size={16} strokeWidth={2} />
+                      <Package size={16} strokeWidth={2} />
                     </button>
                   </div>
                 </div>
@@ -215,75 +422,65 @@ const AdminScreen = () => {
         )}
 
         {activeTab === 'categories' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="flex justify-between items-center mb-5">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <div className="flex justify-between items-center mb-3">
               <h3 className="font-serif font-bold text-xl">Categories</h3>
-              <button 
-                onClick={() => setIsCategoryModalOpen(true)}
-                className="text-[12px] bg-primary text-white px-4 py-2 rounded-full font-bold flex items-center space-x-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95 transition-all"
-              >
+              <button onClick={() => setIsCategoryModalOpen(true)} className="text-[12px] bg-primary text-white px-4 py-2 rounded-full font-bold flex items-center space-x-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95 transition-all">
                 <Plus size={16} strokeWidth={3} /> <span>Add</span>
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {categories.map(cat => (
-                <div key={cat.id} className="bg-surface border border-border/60 rounded-[20px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.02)] flex flex-col items-center text-center">
-                  <span className="text-3xl mb-2">{cat.icon}</span>
-                  <span className="font-bold text-[13px] uppercase tracking-wider text-primary">{cat.name}</span>
+            {categories.map((category, index) => (
+              <div key={category.id} className="bg-surface border border-border/60 rounded-[22px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border/60 flex items-center justify-center text-2xl">{category.icon}</div>
+                <div className="flex-1">
+                  <p className="font-bold text-[15px] text-primary">{category.name}</p>
+                  <p className="text-[12px] text-text-secondary mt-1">{category.description}</p>
                 </div>
-              ))}
-            </div>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => moveCategory(index, -1)} className="w-9 h-9 rounded-xl border border-border/60 bg-background flex items-center justify-center text-primary"><ArrowUp size={16} /></button>
+                  <button onClick={() => moveCategory(index, 1)} className="w-9 h-9 rounded-xl border border-border/60 bg-background flex items-center justify-center text-primary"><ArrowDown size={16} /></button>
+                </div>
+              </div>
+            ))}
           </motion.div>
         )}
-
       </div>
 
-      {/* Product Edit/Add Modal */}
       <AnimatePresence>
         {isProductModalOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsProductModalOpen(false)} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="relative w-full max-w-[430px] bg-background rounded-t-[32px] p-6 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.2)] h-[90vh] overflow-y-auto no-scrollbar border-t border-border/30">
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="relative w-full max-w-[430px] bg-background rounded-t-[32px] p-6 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.2)] h-[92vh] overflow-y-auto no-scrollbar border-t border-border/30">
               <h2 className="font-serif font-bold text-[24px] mb-6 tracking-tight text-primary">{editingProduct ? 'Edit Product' : 'Create Product'}</h2>
-              <form onSubmit={handleSaveProduct} className="space-y-5">
-                
-                <div className="flex space-x-4">
-                  <div className="w-[80px]">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Icon</label>
-                    <input type="text" value={productFormData.emoji} onChange={e => setProductFormData({...productFormData, emoji: e.target.value})} maxLength={2} className="w-full border-2 border-border/50 rounded-2xl px-2 py-3.5 text-center text-2xl bg-surface focus:border-accent-gold focus:outline-none transition-colors shadow-sm" required />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Name</label>
-                    <input type="text" value={productFormData.name} onChange={e => setProductFormData({...productFormData, name: e.target.value})} className="w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[15px] font-bold text-primary transition-colors shadow-sm" required />
-                  </div>
+              <form onSubmit={handleSaveProduct} className="space-y-5 pb-8">
+                <input type="text" value={productFormData.name} onChange={(event) => setProductFormData((prev) => ({ ...prev, name: event.target.value }))} className="input-luxury" placeholder="Product name" required />
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="number" value={productFormData.price} onChange={(event) => setProductFormData((prev) => ({ ...prev, price: event.target.value }))} className="input-luxury" placeholder="Price" required />
+                  <input type="number" value={productFormData.stock} onChange={(event) => setProductFormData((prev) => ({ ...prev, stock: event.target.value }))} className="input-luxury" placeholder="Stock" required />
                 </div>
-
-                <div className="flex space-x-4">
-                  <div className="flex-[2]">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Price (UZS)</label>
-                    <input type="number" value={productFormData.price} onChange={e => setProductFormData({...productFormData, price: e.target.value})} className="w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[15px] font-bold text-primary transition-colors shadow-sm font-mono" required />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Stock</label>
-                    <input type="number" min="0" value={productFormData.stock} onChange={e => setProductFormData({...productFormData, stock: e.target.value})} className="w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[15px] font-bold text-primary transition-colors shadow-sm font-mono text-center" required />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Category</label>
-                  <select value={productFormData.category} onChange={e => setProductFormData({...productFormData, category: e.target.value})} className="w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[15px] font-bold appearance-none transition-colors shadow-sm text-primary">
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Description</label>
-                  <textarea value={productFormData.description} onChange={e => setProductFormData({...productFormData, description: e.target.value})} rows={3} className="w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[14px] leading-relaxed resize-none transition-colors shadow-sm text-primary" required />
-                </div>
-
-                <div className="pt-4 flex space-x-3 pb-8">
+                <select value={productFormData.category} onChange={(event) => setProductFormData((prev) => ({ ...prev, category: event.target.value }))} className="input-luxury appearance-none">
+                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                </select>
+                <textarea value={productFormData.description} onChange={(event) => setProductFormData((prev) => ({ ...prev, description: event.target.value }))} rows={3} className="input-luxury resize-none" placeholder="Description" required />
+                <input type="text" value={productFormData.material} onChange={(event) => setProductFormData((prev) => ({ ...prev, material: event.target.value }))} className="input-luxury" placeholder="Fabric / material" required />
+                <input type="text" value={productFormData.deliveryEstimate} onChange={(event) => setProductFormData((prev) => ({ ...prev, deliveryEstimate: event.target.value }))} className="input-luxury" placeholder="Delivery estimate" required />
+                <textarea value={productFormData.careInstructions} onChange={(event) => setProductFormData((prev) => ({ ...prev, careInstructions: event.target.value }))} rows={2} className="input-luxury resize-none" placeholder="Care instructions, comma separated" required />
+                <input type="text" value={productFormData.sizes} onChange={(event) => setProductFormData((prev) => ({ ...prev, sizes: event.target.value }))} className="input-luxury" placeholder="Sizes, comma separated" required />
+                <input type="text" value={productFormData.sizeStock} onChange={(event) => setProductFormData((prev) => ({ ...prev, sizeStock: event.target.value }))} className="input-luxury" placeholder="Size stock e.g. S:2, M:4" required />
+                <input type="text" value={productFormData.colors} onChange={(event) => setProductFormData((prev) => ({ ...prev, colors: event.target.value }))} className="input-luxury" placeholder="Colors e.g. Black:#111111, Sand:#C8B291" required />
+                <input type="text" value={productFormData.badges} onChange={(event) => setProductFormData((prev) => ({ ...prev, badges: event.target.value }))} className="input-luxury" placeholder="Badges, comma separated" />
+                <input type="text" value={productFormData.featuredCollection} onChange={(event) => setProductFormData((prev) => ({ ...prev, featuredCollection: event.target.value }))} className="input-luxury" placeholder="Featured collection" />
+                <input type="number" min="0" max="80" value={productFormData.sale} onChange={(event) => setProductFormData((prev) => ({ ...prev, sale: event.target.value }))} className="input-luxury" placeholder="Sale %" />
+                <input type="url" value={productFormData.image} onChange={(event) => setProductFormData((prev) => ({ ...prev, image: event.target.value }))} className="input-luxury" placeholder="Image URL" />
+                <label className="rounded-[24px] border border-dashed border-border/70 bg-surface p-4 flex items-center gap-3 cursor-pointer text-primary font-bold">
+                  <ImagePlus size={18} className="text-accent-gold" />
+                  Upload product image
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+                {(productFormData.imageUpload || productFormData.image) && (
+                  <img src={productFormData.imageUpload || productFormData.image} alt="Preview" className="w-full h-[180px] object-cover rounded-[24px] border border-border/60" />
+                )}
+                <div className="pt-2 flex space-x-3">
                   <button type="button" onClick={() => setIsProductModalOpen(false)} className="flex-[0.6] py-4 h-[56px] rounded-2xl font-bold bg-muted/20 text-text-primary active:scale-95 transition-transform text-[15px] tracking-wide">Cancel</button>
                   <button type="submit" className="flex-1 py-4 h-[56px] rounded-2xl font-bold bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:scale-95 transition-transform text-[15px] tracking-wide">{editingProduct ? 'Save Changes' : 'Create Product'}</button>
                 </div>
@@ -300,27 +497,18 @@ const AdminScreen = () => {
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="relative w-full max-w-[430px] bg-background rounded-t-[32px] p-6 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] border-t border-border/30">
               <h2 className="font-serif font-bold text-[24px] mb-6 text-primary tracking-tight">Add Category</h2>
               <form onSubmit={handleSaveCategory} className="space-y-5">
-                <div className="flex space-x-4">
-                  <div className="w-[80px]">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Icon</label>
-                    <input type="text" value={categoryFormData.icon} onChange={e => setCategoryFormData({...categoryFormData, icon: e.target.value})} maxLength={2} className="w-full border-2 border-border/50 rounded-2xl px-2 py-4 text-center text-2xl bg-surface focus:border-accent-gold focus:outline-none shadow-sm" required />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2 pl-1">Name</label>
-                    <input type="text" value={categoryFormData.name} onChange={e => setCategoryFormData({...categoryFormData, name: e.target.value})} className="w-full border-2 border-border/50 rounded-2xl px-4 py-4 bg-surface focus:border-accent-gold focus:outline-none text-[15px] font-bold text-primary shadow-sm" required />
-                  </div>
-                </div>
-                <div className="pt-2 flex space-x-3">
-                  <button type="submit" className="w-full py-4 h-[56px] rounded-2xl font-bold bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:scale-95 transition-transform text-[15px]">Save</button>
-                </div>
+                <input type="text" value={categoryFormData.icon} onChange={(event) => setCategoryFormData((prev) => ({ ...prev, icon: event.target.value }))} className="input-luxury" placeholder="Icon" required />
+                <input type="text" value={categoryFormData.name} onChange={(event) => setCategoryFormData((prev) => ({ ...prev, name: event.target.value }))} className="input-luxury" placeholder="Category name" required />
+                <textarea value={categoryFormData.description} onChange={(event) => setCategoryFormData((prev) => ({ ...prev, description: event.target.value }))} rows={3} className="input-luxury resize-none" placeholder="Category description" required />
+                <button type="submit" className="w-full py-4 h-[56px] rounded-2xl font-bold bg-primary text-white shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:scale-95 transition-transform text-[15px]">Save</button>
               </form>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-      
     </motion.div>
-  );
-};
+  )
+}
 
-export default AdminScreen;
+export default AdminScreen
+
