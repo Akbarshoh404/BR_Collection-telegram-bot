@@ -1,0 +1,6 @@
+[
+  { "id": "cat_1", "name": "Jackets", "icon": "🧥" },
+  { "id": "cat_2", "name": "Polos", "icon": "👕" },
+  { "id": "cat_3", "name": "Pants", "icon": "👖" },
+  { "id": "cat_4", "name": "Accessories", "icon": "🕶️" }
+]

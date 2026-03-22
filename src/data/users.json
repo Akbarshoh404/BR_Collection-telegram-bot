@@ -1,0 +1,11 @@
+[
+  {
+    "id": "u_1",
+    "telegramId": "BrowserTester",
+    "firstName": "Browser",
+    "lastName": "Tester",
+    "joinedAt": "2023-01-15T00:00:00Z",
+    "totalSpent": 0,
+    "isAdmin": false
+  }
+]

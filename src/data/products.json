@@ -1,0 +1,11 @@
+[
+  { "id": "1", "name": "Milano Slim Blazer", "category": "cat_1", "price": 890000, "sizes": ["S","M","L","XL"], "emoji": "🕴️", "description": "Classic slim fit blazer for a sharp look. Perfect for formal occasions.", "sale": 0, "stock": 12, "rating": 4.8, "reviews": 24 },
+  { "id": "2", "name": "Navy Structured Jacket", "category": "cat_1", "price": 750000, "sizes": ["M","L"], "emoji": "🧥", "description": "Comfortable structured jacket for everyday elegance.", "sale": 15, "stock": 5, "rating": 4.5, "reviews": 12 },
+  { "id": "3", "name": "Signature Polo White", "category": "cat_2", "price": 320000, "sizes": ["S","M","L","XL"], "emoji": "👕", "description": "Premium white polo with signature detailing.", "sale": 0, "stock": 50, "rating": 4.9, "reviews": 45 },
+  { "id": "4", "name": "Chocolate Trim Polo", "category": "cat_2", "price": 340000, "sizes": ["S","M"], "emoji": "👕", "description": "Rich chocolate colored polo with contrast trim.", "sale": 0, "stock": 0, "rating": 4.2, "reviews": 8 },
+  { "id": "5", "name": "Classic Knit Polo", "category": "cat_2", "price": 290000, "sizes": ["M","L","XL"], "emoji": "🧶", "description": "Comfortable knit polo perfect for smart casual.", "sale": 10, "stock": 18, "rating": 4.6, "reviews": 31 },
+  { "id": "6", "name": "Tailored Chino Navy", "category": "cat_3", "price": 480000, "sizes": ["S","M","L","XL"], "emoji": "👖", "description": "Classic navy chinos tailored for a perfect fit.", "sale": 0, "stock": 25, "rating": 4.7, "reviews": 19 },
+  { "id": "7", "name": "Smart Casual Trousers", "category": "cat_3", "price": 520000, "sizes": ["S","L"], "emoji": "👖", "description": "Versatile trousers that can be dressed up or down.", "sale": 0, "stock": 8, "rating": 4.4, "reviews": 14 },
+  { "id": "8", "name": "Linen Blend Pants", "category": "cat_3", "price": 440000, "sizes": ["L","XL"], "emoji": "🌴", "description": "Lightweight linen blend pants for warm weather.", "sale": 20, "stock": 10, "rating": 4.8, "reviews": 22 },
+  { "id": "9", "name": "Gold Aviator Sunglasses", "category": "cat_4", "price": 180000, "sizes": ["One Size"], "emoji": "🕶️", "description": "Classic teardrop aviators with gold-tone frames.", "sale": 0, "stock": 30, "rating": 4.9, "reviews": 56 }
+]
