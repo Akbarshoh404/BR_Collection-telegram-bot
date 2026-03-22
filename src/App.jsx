@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import { telegram } from './utils/telegram';
 import { AppContext } from './context/AppContext';
+import { Analytics } from "@vercel/analytics/react"
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import MainLayout from './screens/MainLayout';

@@ -34,6 +34,7 @@ export const AppProvider = ({ children }) => {
           telegramId: tgUser.username || tgUser.id?.toString() || 'guest',
           firstName: tgUser.first_name || 'Guest',
           lastName: tgUser.last_name || '',
+          photoUrl: tgUser.photo_url || null,
           joinedAt: new Date().toISOString(),
           totalSpent: 0,
           isAdmin: false
@@ -80,9 +81,10 @@ export const AppProvider = ({ children }) => {
     setProducts(newProducts);
     
     if(currentUser) {
-      const updatedUser = {...currentUser, totalSpent: currentUser.totalSpent + order.total};
+      const orderTotal = (order.items || []).reduce((sum, item) => sum + (item.finalPrice || 0), 0);
+      const updatedUser = {...currentUser, totalSpent: (Number(currentUser.totalSpent) || 0) + orderTotal};
       setCurrentUser(updatedUser);
-      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+      setUsers(prevUsers => prevUsers.map(u => u.id === currentUser.id ? updatedUser : u));
     }
   };
 

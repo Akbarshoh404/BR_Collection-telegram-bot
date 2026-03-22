@@ -29,14 +29,18 @@ const ProfileScreen = () => {
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="pb-32 bg-background min-h-screen"
+      className="pb-40 bg-background min-h-screen"
     >
-      <header className="pt-8 pb-8 px-6 bg-surface border-b border-border/50 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative overflow-hidden">
+      <header className="pt-6 pb-6 px-6 bg-surface border-b border-border/50 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-accent-gold/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         
         <div className="flex items-center space-x-5 relative z-10">
-          <button className="w-[84px] h-[84px] bg-[#1A1A1A] text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-[0_8px_20px_rgba(0,0,0,0.15)] bg-gradient-to-br from-[#1A1A1A] to-[#333] relative cursor-pointer active:scale-95 transition-transform border-[3px] border-surface">
-            {currentUser?.firstName?.charAt(0) || 'U'}
+          <button className="w-[84px] h-[84px] bg-[#1A1A1A] text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-[0_8px_20px_rgba(0,0,0,0.15)] relative cursor-pointer active:scale-95 transition-transform border-[3px] border-surface overflow-hidden">
+            {currentUser?.photoUrl ? (
+               <img src={currentUser.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+               <div className="w-full h-full bg-gradient-to-br from-[#1A1A1A] to-[#333] flex items-center justify-center">{currentUser?.firstName?.charAt(0) || 'U'}</div>
+            )}
             {currentUser?.isAdmin && (
               <div className="absolute bottom-0 right-0 bg-accent-gold text-white p-1.5 rounded-full border-[3px] border-surface shadow-sm">
                 <ShieldCheck size={14} strokeWidth={3} />
@@ -51,14 +55,14 @@ const ProfileScreen = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-8 relative z-10">
-          <div className="bg-background rounded-2xl p-4.5 border border-border/50 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-1">Total Spent</p>
-            <p className="text-xl font-bold text-accent-gold tracking-tight">{formatPrice(currentUser?.totalSpent || 0)}</p>
+        <div className="grid grid-cols-2 gap-4 mt-10 relative z-10 px-1">
+          <div className="bg-surface rounded-2xl p-5 border border-border/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col items-center">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-text-secondary mb-2">Total Spent</p>
+            <p className="text-[16px] font-bold text-accent-gold tracking-tight">{formatPrice(currentUser?.totalSpent || 0)}</p>
           </div>
-          <div className="bg-background rounded-2xl p-4.5 border border-border/50 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-1">Total Orders</p>
-            <p className="text-xl font-bold text-[#1A1A1A]">{userOrders.length}</p>
+          <div className="bg-surface rounded-2xl p-5 border border-border/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col items-center">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-text-secondary mb-2">Total Orders</p>
+            <p className="text-[20px] font-bold text-[#1A1A1A] leading-none">{userOrders.length}</p>
           </div>
         </div>
       </header>
@@ -75,17 +79,10 @@ const ProfileScreen = () => {
               </div>
               <ChevronRight size={18} className="text-border" />
             </button>
-            <button onClick={() => navigate('/wishlist')} className="w-full flex items-center justify-between p-4 px-5 bg-transparent hover:bg-muted/10 active:bg-muted/20 transition-colors border-b border-border/50">
+            <button onClick={() => navigate('/wishlist')} className="w-full flex items-center justify-between p-4 px-5 bg-transparent hover:bg-muted/10 active:bg-muted/20 transition-colors">
               <div className="flex items-center space-x-3 text-primary">
                 <Heart size={22} className="text-text-secondary" strokeWidth={1.5} />
                 <span className="font-bold text-[15px]">Wishlist</span>
-              </div>
-              <ChevronRight size={18} className="text-border" />
-            </button>
-            <button className="w-full flex items-center justify-between p-4 px-5 bg-transparent hover:bg-muted/10 active:bg-muted/20 transition-colors">
-              <div className="flex items-center space-x-3 text-primary">
-                <History size={22} className="text-text-secondary" strokeWidth={1.5} />
-                <span className="font-bold text-[15px]">Recently Viewed</span>
               </div>
               <ChevronRight size={18} className="text-border" />
             </button>
@@ -134,7 +131,7 @@ const ProfileScreen = () => {
 
         {/* Direct Admin Access Button (if already admin) */}
         {currentUser?.isAdmin && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2 pb-6">
             <button 
               onClick={() => navigate('/admin')}
               className="w-full bg-[#1A1A1A] text-white p-4.5 h-[64px] rounded-[20px] flex items-center justify-between shadow-[0_8px_20px_rgba(0,0,0,0.2)] active:scale-95 transition-all outline-none"
@@ -162,11 +159,15 @@ const ProfileScreen = () => {
                 </button>
               </div>
               
-              <div className="bg-surface border border-border/60 p-4 rounded-2xl mb-6 shadow-sm">
-                <p className="text-[13px] font-medium text-text-secondary leading-relaxed flex items-start space-x-3">
-                  <ShieldCheck size={24} className="text-accent-gold shrink-0 mt-0.5" />
-                  <span>Administrative credentials are required to modify the store catalog, review ledger orders, and manage global sales events.</span>
-                </p>
+              <div className="bg-muted/5 border border-border/40 p-5 rounded-2xl mb-8">
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-accent-gold/10 rounded-full flex items-center justify-center shrink-0">
+                    <ShieldCheck size={20} className="text-accent-gold" />
+                  </div>
+                  <p className="text-[13px] font-medium text-text-secondary leading-relaxed">
+                    Administrative access allows inventory management and ledger oversight. Default: <span className="text-primary font-bold">admin / 1234</span>
+                  </p>
+                </div>
               </div>
               
               <form onSubmit={handleAdminLogin} className="space-y-4">

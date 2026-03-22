@@ -37,9 +37,12 @@ const HomeScreen = () => {
             <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-0.5">Welcome, {currentUser?.firstName}</span>
             <h1 className="font-serif text-[26px] font-bold leading-none tracking-tight text-[#1A1A1A]">BR Collection</h1>
           </div>
-          <div className="w-10 h-10 rounded-full bg-border/40 flex items-center justify-center text-[#1A1A1A] shadow-sm hover:bg-border/60 transition-colors cursor-pointer">
-            {/* Logo area */}
-            <span className="font-serif font-bold text-lg">B&R</span>
+          <div onClick={() => navigate('/profile')} className="w-10 h-10 rounded-full bg-border/40 flex items-center justify-center text-[#1A1A1A] shadow-sm hover:bg-border/60 transition-colors cursor-pointer overflow-hidden">
+            {currentUser?.photoUrl ? (
+              <img src={currentUser.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-serif font-bold text-lg">B&R</span>
+            )}
           </div>
         </div>
         
