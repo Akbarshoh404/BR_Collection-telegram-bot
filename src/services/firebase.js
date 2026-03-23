@@ -1,5 +1,6 @@
 ﻿import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getDatabase, onValue, ref, set } from 'firebase/database'
+import { getDownloadURL, getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
 
 const fallbackFirebaseConfig = {
   apiKey: 'AIzaSyC2euMKW0qlGc8RhB1B5saMqEjYsijmwVg',
@@ -29,15 +30,18 @@ const firebaseConfigured = Boolean(
 )
 
 let database = null
+let storage = null
 
 if (firebaseConfigured) {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
   database = getDatabase(app)
+  storage = getStorage(app)
 }
 
 export const firebaseState = {
   configured: firebaseConfigured,
   database,
+  storage,
   config: firebaseConfig,
 }
 
@@ -71,4 +75,14 @@ export const writePath = async (path, value) => {
 
   await set(ref(database, path), value)
   return true
+}
+
+export const uploadImageToFirebase = async (file, folder = 'products') => {
+  if (!storage || !file) {
+    return null
+  }
+
+  const fileRef = storageRef(storage, `${folder}/${Date.now()}-${file.name}`)
+  await uploadBytes(fileRef, file)
+  return getDownloadURL(fileRef)
 }

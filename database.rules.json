@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "store": {
+      ".read": true,
+      ".write": true
+    },
+    "sessions": {
+      ".read": true,
+      ".write": true
+    },
+    ".read": false,
+    ".write": false
+  }
+}

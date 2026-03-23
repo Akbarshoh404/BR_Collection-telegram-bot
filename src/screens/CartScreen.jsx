@@ -9,7 +9,7 @@ import { getProductImage } from '../utils/productMedia'
 
 const CartScreen = () => {
   const navigate = useNavigate()
-  const { cart, removeFromCart, updateCartItemQty } = useContext(AppContext)
+  const { cart, removeFromCart, updateCartItemQty, t } = useContext(AppContext)
 
   useEffect(() => {
     if (telegram?.BackButton) {
@@ -121,7 +121,7 @@ const CartScreen = () => {
         <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-surface/95 backdrop-blur-md border-t border-border/50 p-5 px-6 pb-safe z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
           <button onClick={handlePlaceOrder} className="w-full bg-accent-gold text-white py-4 h-[56px] rounded-2xl font-bold text-center shadow-[0_8px_20px_rgba(184,149,42,0.3)] hover:bg-accent-gold/90 transition-all active:scale-[0.98] text-[15px] tracking-wide flex items-center justify-center gap-2">
             <ShoppingBag size={18} />
-            Continue to Checkout
+            {t('continueToCheckout')}
           </button>
         </div>
       )}

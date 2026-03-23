@@ -7,6 +7,7 @@ export const AppContext = createContext()
 
 const STORE_CACHE_KEY = 'br-collection-store-cache'
 const SESSION_PREFIX = 'br-collection-session-'
+const LANGUAGE_KEY = 'br-collection-language'
 const defaultCheckoutDraft = {
   fullName: '',
   region: 'Toshkent shahri',
@@ -16,6 +17,114 @@ const defaultCheckoutDraft = {
   paymentMethod: 'Cash',
   promoCode: '',
   orderNotes: '',
+}
+
+const defaultHomeBanners = [
+  {
+    id: 'banner_1',
+    eyebrow: 'New Season',
+    title: 'Tailored essentials for a sharper wardrobe',
+    subtitle: 'Premium BR Collection pieces styled for Telegram-first shopping.',
+    cta: 'Shop Collection',
+    targetCollection: 'Tailored Icons',
+    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1400&q=80',
+  },
+  {
+    id: 'banner_2',
+    eyebrow: 'Fresh Drop',
+    title: 'Core polos and smart layers now live',
+    subtitle: 'Build a polished look with fast delivery and direct chat support.',
+    cta: 'See New Arrivals',
+    targetCollection: 'Core Essentials',
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=80',
+  },
+]
+
+const translations = {
+  en: {
+    home: 'Home',
+    wishlist: 'Wishlist',
+    cart: 'Cart',
+    profile: 'Profile',
+    backendFirebaseLive: 'Firebase Live',
+    backendFirebaseReady: 'Firebase Ready',
+    backendLocalCache: 'Offline Cache',
+    language: 'Language',
+    english: 'English',
+    uzbek: 'Uzbek',
+    russian: 'Russian',
+    contactSupport: 'Contact Support',
+    callBoutique: 'Call Boutique',
+    realtimeSync: 'Realtime Sync',
+    myOrders: 'My Orders',
+    settingsSyncDescription: 'Your bag, favorites, and checkout draft persist automatically.',
+    adminAccess: 'Admin Access',
+    allOrders: 'All Orders',
+    continueToCheckout: 'Continue to Checkout',
+    orderReceived: 'Order Received',
+    startShopping: 'Start Shopping',
+    placeOrderSecurely: 'Place Order Securely',
+    paymentAndNotes: 'Payment & Notes',
+    delivery: 'Delivery',
+    orderReview: 'Order Review',
+    checkout: 'Checkout',
+  },
+  uz: {
+    home: 'Bosh sahifa',
+    wishlist: 'Saralanganlar',
+    cart: 'Savat',
+    profile: 'Profil',
+    backendFirebaseLive: 'Firebase Ulandi',
+    backendFirebaseReady: 'Firebase Tayyor',
+    backendLocalCache: 'Mahalliy Kesh',
+    language: 'Til',
+    english: 'Inglizcha',
+    uzbek: "O'zbekcha",
+    russian: 'Ruscha',
+    contactSupport: 'Yordam bilan aloqa',
+    callBoutique: "Butikka qo'ng'iroq",
+    realtimeSync: 'Real vaqt sinxroni',
+    myOrders: 'Buyurtmalarim',
+    settingsSyncDescription: "Savat, yoqtirilganlar va checkout ma'lumotlari avtomatik saqlanadi.",
+    adminAccess: 'Admin kirish',
+    allOrders: 'Barcha buyurtmalar',
+    continueToCheckout: "Buyurtmaga o'tish",
+    orderReceived: 'Buyurtma qabul qilindi',
+    startShopping: 'Xaridni boshlash',
+    placeOrderSecurely: 'Buyurtmani yuborish',
+    paymentAndNotes: "To'lov va izohlar",
+    delivery: 'Yetkazib berish',
+    orderReview: "Buyurtma ko'rigi",
+    checkout: 'Rasmiylashtirish',
+  },
+  ru: {
+    home: 'Главная',
+    wishlist: 'Избранное',
+    cart: 'Корзина',
+    profile: 'Профиль',
+    backendFirebaseLive: 'Firebase Подключен',
+    backendFirebaseReady: 'Firebase Готов',
+    backendLocalCache: 'Локальный Кэш',
+    language: 'Язык',
+    english: 'Английский',
+    uzbek: 'Узбекский',
+    russian: 'Русский',
+    contactSupport: 'Поддержка',
+    callBoutique: 'Позвонить в бутик',
+    realtimeSync: 'Синхронизация',
+    myOrders: 'Мои заказы',
+    settingsSyncDescription: 'Корзина, избранное и данные оформления сохраняются автоматически.',
+    adminAccess: 'Вход администратора',
+    allOrders: 'Все заказы',
+    continueToCheckout: 'Перейти к оформлению',
+    orderReceived: 'Заказ получен',
+    startShopping: 'Начать покупки',
+    placeOrderSecurely: 'Оформить заказ',
+    paymentAndNotes: 'Оплата и заметки',
+    delivery: 'Доставка',
+    orderReview: 'Проверка заказа',
+    checkout: 'Оформление',
+  },
 }
 
 const clone = (value) => JSON.parse(JSON.stringify(value))
@@ -66,6 +175,9 @@ const normalizeStoreData = (value) => {
     settings: {
       ...seed.settings,
       ...(incoming.settings || {}),
+      homeBanners: Array.isArray(incoming.settings?.homeBanners) && incoming.settings.homeBanners.length
+        ? incoming.settings.homeBanners
+        : defaultHomeBanners,
       contact: {
         ...seed.settings.contact,
         ...((incoming.settings && incoming.settings.contact) || {}),
@@ -135,6 +247,7 @@ export const AppProvider = ({ children }) => {
   const [sessionKey, setSessionKey] = useState('guest')
   const [sessionData, setSessionDataState] = useState(() => normalizeSession(loadJson(getSessionStorageKey('guest'), getSessionDefaults())))
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => loadJson('br-collection-onboarding', false))
+  const [language, setLanguageState] = useState(() => loadJson(LANGUAGE_KEY, 'en'))
   const [backendMode, setBackendMode] = useState(firebaseState.configured ? 'firebase-ready' : 'local-cache')
   const [storeReady, setStoreReady] = useState(!firebaseState.configured)
 
@@ -290,6 +403,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     saveJson('br-collection-onboarding', hasSeenOnboarding)
   }, [hasSeenOnboarding])
+
+  useEffect(() => {
+    saveJson(LANGUAGE_KEY, language)
+  }, [language])
 
   const getProductPrice = useCallback(
     (product) => {
@@ -659,6 +776,29 @@ export const AppProvider = ({ children }) => {
     }))
   }, [updateStore])
 
+  const setHomeBanners = useCallback((value) => {
+    updateStore((prev) => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        homeBanners: typeof value === 'function' ? value(prev.settings.homeBanners || []) : value,
+      },
+    }))
+  }, [updateStore])
+
+  const setPromos = useCallback((value) => {
+    updateStore((prev) => ({
+      ...prev,
+      promos: typeof value === 'function' ? value(prev.promos) : value,
+    }))
+  }, [updateStore])
+
+  const setLanguage = useCallback((value) => {
+    setLanguageState(value)
+  }, [])
+
+  const t = useCallback((key) => translations[language]?.[key] || translations.en[key] || key, [language])
+
   const bestSellers = useMemo(
     () => [...storeData.products].sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0)).slice(0, 4),
     [storeData.products],
@@ -721,13 +861,19 @@ export const AppProvider = ({ children }) => {
     setSalePercent,
     saleMessage: storeData.settings.saleMessage,
     setSaleMessage,
+    homeBanners: storeData.settings.homeBanners || defaultHomeBanners,
+    setHomeBanners,
     contactInfo: storeData.settings.contact,
     faq: storeData.faq,
     policies: storeData.policies,
     promos: storeData.promos,
+    setPromos,
     applyPromoCode,
     hasSeenOnboarding,
     setHasSeenOnboarding,
+    language,
+    setLanguage,
+    t,
     getProductPrice,
     setProducts,
     setCategories,

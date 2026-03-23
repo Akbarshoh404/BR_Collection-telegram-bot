@@ -76,10 +76,9 @@ const OrdersScreen = () => {
             </select>
             <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)} className="input-luxury appearance-none text-[13px]">
               <option value="all">All Payments</option>
-              <option value="Cash on Delivery">Cash</option>
-              <option value="Click">Click</option>
-              <option value="Payme">Payme</option>
-              <option value="Card Transfer">Card</option>
+              <option value="Cash">Cash</option>
+              <option value="Online Card">Online Card</option>
+              <option value="Card on Delivery">Card on Delivery</option>
             </select>
             <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} className="input-luxury appearance-none text-[13px]">
               <option value="all">All Dates</option>

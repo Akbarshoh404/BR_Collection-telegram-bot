@@ -6,7 +6,7 @@ import { AppContext } from '../context/AppContext'
 import { formatPrice } from '../utils/formatPrice'
 
 const ProfileScreen = () => {
-  const { currentUser, becomeAdmin, orders, contactInfo, backendMode } = useContext(AppContext)
+  const { currentUser, becomeAdmin, orders, contactInfo, backendMode, language, setLanguage, t } = useContext(AppContext)
   const navigate = useNavigate()
   const [showAdminLogin, setShowAdminLogin] = useState(false)
   const [adminUser, setAdminUser] = useState('')
@@ -36,6 +36,12 @@ const ProfileScreen = () => {
     window.open(`tel:${contactInfo.phone.replace(/\s+/g, '')}`, '_self')
   }
 
+  const backendLabel = {
+    'firebase-live': t('backendFirebaseLive'),
+    'firebase-ready': t('backendFirebaseReady'),
+    'local-cache': t('backendLocalCache'),
+  }[backendMode] || backendMode
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-40 bg-background min-h-screen">
       <header className="pt-6 pb-6 px-6 bg-surface border-b border-border/50 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative overflow-hidden">
@@ -58,7 +64,7 @@ const ProfileScreen = () => {
           <div>
             <h2 className="text-[26px] font-serif font-bold text-[#1A1A1A] leading-tight tracking-tight">{currentUser?.firstName || 'Guest'} {currentUser?.lastName}</h2>
             <p className="text-[13px] font-bold uppercase tracking-widest text-text-secondary mt-1 px-2 py-0.5 bg-muted/10 rounded-md w-fit">@{currentUser?.telegramId}</p>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-gold mt-2">Backend: {backendMode}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-gold mt-2">Backend: {backendLabel}</p>
           </div>
         </div>
 
@@ -82,7 +88,7 @@ const ProfileScreen = () => {
             <motion.button onClick={() => navigate('/user-orders')} whileHover={{ backgroundColor: 'rgba(192, 187, 181, 0.1)' }} whileTap={{ scale: 0.98 }} className="w-full flex items-center justify-between p-4 px-5 bg-transparent transition-colors border-b border-border/50">
               <div className="flex items-center space-x-3 text-primary">
                 <Package size={22} className="text-text-secondary" strokeWidth={1.5} />
-                <span className="font-bold text-[15px]">My Orders</span>
+                <span className="font-bold text-[15px]">{t('myOrders')}</span>
               </div>
               <ChevronRight size={18} className="text-border" />
             </motion.button>
@@ -104,7 +110,7 @@ const ProfileScreen = () => {
               <div className="flex items-center space-x-3 text-primary">
                 <HeadphonesIcon size={22} className="text-text-secondary" strokeWidth={1.5} />
                 <div className="text-left">
-                  <span className="font-bold text-[15px] block">Contact Support</span>
+                  <span className="font-bold text-[15px] block">{t('contactSupport')}</span>
                   <span className="text-[12px] text-text-secondary">Telegram {contactInfo.telegram}</span>
                 </div>
               </div>
@@ -115,23 +121,48 @@ const ProfileScreen = () => {
               <div className="flex items-center space-x-3 text-primary">
                 <Globe size={22} className="text-text-secondary" strokeWidth={1.5} />
                 <div className="text-left">
-                  <span className="font-bold text-[15px] block">Call Boutique</span>
+                  <span className="font-bold text-[15px] block">{t('callBoutique')}</span>
                   <span className="text-[12px] text-text-secondary">{contactInfo.phone}</span>
                 </div>
               </div>
               <ChevronRight size={18} className="text-border" />
             </motion.button>
 
-            <motion.button whileHover={{ backgroundColor: 'rgba(192, 187, 181, 0.1)' }} whileTap={{ scale: 0.98 }} className="w-full flex items-center justify-between p-4 px-5 bg-transparent transition-colors">
+            <motion.button whileHover={{ backgroundColor: 'rgba(192, 187, 181, 0.1)' }} whileTap={{ scale: 0.98 }} className="w-full flex items-center justify-between p-4 px-5 bg-transparent transition-colors border-b border-border/50">
               <div className="flex items-center space-x-3 text-primary">
                 <Settings size={22} className="text-text-secondary" strokeWidth={1.5} />
                 <div className="text-left">
-                  <span className="font-bold text-[15px] block">Realtime Sync</span>
-                  <span className="text-[12px] text-text-secondary">Your bag, favorites, and checkout draft persist automatically.</span>
+                  <span className="font-bold text-[15px] block">{t('realtimeSync')}</span>
+                  <span className="text-[12px] text-text-secondary">{t('settingsSyncDescription')}</span>
                 </div>
               </div>
               <ChevronRight size={18} className="text-border" />
             </motion.button>
+
+            <div className="p-4 px-5">
+              <div className="flex items-center space-x-3 text-primary mb-3">
+                <Globe size={22} className="text-text-secondary" strokeWidth={1.5} />
+                <div className="text-left">
+                  <span className="font-bold text-[15px] block">{t('language')}</span>
+                  <span className="text-[12px] text-text-secondary">Uzbek / English / Russian</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'uz', label: t('uzbek') },
+                  { id: 'en', label: t('english') },
+                  { id: 'ru', label: t('russian') },
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setLanguage(option.id)}
+                    className={`rounded-2xl border px-3 py-3 text-[12px] font-bold transition-colors ${language === option.id ? 'border-primary bg-primary text-white' : 'border-border/60 bg-background text-primary'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -157,7 +188,7 @@ const ProfileScreen = () => {
         {!currentUser?.isAdmin && (
           <motion.button onClick={() => setShowAdminLogin(true)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="w-full bg-muted/10 text-text-secondary p-4 rounded-[20px] font-bold text-[14px] transition-all hover:bg-muted/20 border border-border/50">
             <ShieldCheck size={18} className="inline mr-2" />
-            Admin Access
+            {t('adminAccess')}
           </motion.button>
         )}
       </div>

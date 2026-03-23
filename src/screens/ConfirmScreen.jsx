@@ -26,7 +26,7 @@ const regions = [
 const paymentMethods = ['Online Card', 'Cash', 'Card on Delivery']
 
 const ConfirmScreen = () => {
-  const { cart, clearCart, addOrder, currentUser, checkoutDraft, updateCheckoutDraft, applyPromoCode, updateCurrentUserProfile } = useContext(AppContext)
+  const { cart, clearCart, addOrder, currentUser, checkoutDraft, updateCheckoutDraft, applyPromoCode, updateCurrentUserProfile, t } = useContext(AppContext)
   const navigate = useNavigate()
   const [orderId, setOrderId] = useState('')
   const [placedOrder, setPlacedOrder] = useState(null)
@@ -121,7 +121,7 @@ const ConfirmScreen = () => {
         </motion.div>
 
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="w-full max-w-[360px]">
-          <h1 className="text-[32px] font-serif font-bold mb-3 tracking-tight text-primary leading-tight">Order Received</h1>
+          <h1 className="text-[32px] font-serif font-bold mb-3 tracking-tight text-primary leading-tight">{t('orderReceived')}</h1>
           <p className="text-text-secondary text-[15px] mx-auto leading-relaxed mb-8">
             Your order <span className="font-mono text-primary font-bold">{orderId}</span> is in the queue. We have also sent a Telegram update payload for order tracking.
           </p>
@@ -169,14 +169,14 @@ const ConfirmScreen = () => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-background px-5 py-6 pb-10 space-y-6">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-accent-gold">Checkout</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-accent-gold">{t('checkout')}</p>
         <h1 className="text-[30px] font-serif font-bold text-primary mt-2">Confirm your order details</h1>
         <p className="text-[14px] text-text-secondary mt-2 leading-relaxed">Fill in delivery details for Uzbekistan, choose a payment type, and we will show an estimated delivery time of 3 days.</p>
       </div>
 
       <div className="space-y-4">
         <div className="rounded-[26px] border border-border/60 bg-surface p-5 space-y-4 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-2"><MapPin size={18} className="text-accent-gold" /><h2 className="font-serif text-[22px] font-bold text-primary">Delivery</h2></div>
+          <div className="flex items-center gap-2"><MapPin size={18} className="text-accent-gold" /><h2 className="font-serif text-[22px] font-bold text-primary">{t('delivery')}</h2></div>
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Full Name</label>
             <input value={checkoutDraft.fullName} onChange={(event) => updateCheckoutDraft({ fullName: event.target.value })} className="input-luxury font-medium" placeholder="Akbarshoh Aliyev" />
@@ -210,7 +210,7 @@ const ConfirmScreen = () => {
         </div>
 
         <div className="rounded-[26px] border border-border/60 bg-surface p-5 space-y-4 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-2"><CreditCard size={18} className="text-accent-gold" /><h2 className="font-serif text-[22px] font-bold text-primary">Payment & Notes</h2></div>
+          <div className="flex items-center gap-2"><CreditCard size={18} className="text-accent-gold" /><h2 className="font-serif text-[22px] font-bold text-primary">{t('paymentAndNotes')}</h2></div>
           <div className="grid grid-cols-2 gap-3">
             {paymentMethods.map((method) => (
               <button key={method} onClick={() => updateCheckoutDraft({ paymentMethod: method })} className={`rounded-[20px] border px-4 py-3 text-left transition-colors ${checkoutDraft.paymentMethod === method ? 'border-primary bg-primary text-white' : 'border-border/60 bg-background text-primary'}`}>
@@ -238,7 +238,7 @@ const ConfirmScreen = () => {
         </div>
 
         <div className="rounded-[26px] border border-border/60 bg-surface p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)] space-y-4">
-          <h2 className="font-serif text-[22px] font-bold text-primary">Order Review</h2>
+          <h2 className="font-serif text-[22px] font-bold text-primary">{t('orderReview')}</h2>
           <div className="space-y-3">
             {cart.map((item) => (
               <div key={item.cartId} className="flex justify-between items-center text-[13px]">
@@ -265,7 +265,7 @@ const ConfirmScreen = () => {
 
       <button disabled={!formIsValid} onClick={handlePlaceOrder} className={`w-full h-[58px] rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${formIsValid ? 'bg-accent-gold text-white shadow-[0_8px_20px_rgba(184,149,42,0.3)]' : 'bg-muted text-surface cursor-not-allowed'}`}>
         <Check size={18} />
-        Place Order Securely
+        {t('placeOrderSecurely')}
       </button>
     </motion.div>
   )

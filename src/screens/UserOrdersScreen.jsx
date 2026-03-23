@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { formatPrice } from '../utils/formatPrice'
 import { telegram } from '../utils/telegram'
+import { getProductGlyph } from '../utils/iconMaps'
 
 const UserOrdersScreen = () => {
   const { orders, currentUser } = useContext(AppContext)
@@ -59,7 +60,7 @@ const UserOrdersScreen = () => {
                 {order.items.map((item, index) => (
                   <div key={`${item.id}-${index}`} className="flex justify-between items-center">
                     <div className="flex items-center space-x-3 truncate">
-                      <div className="w-10 h-10 bg-muted/10 rounded-lg flex items-center justify-center text-xl">{item.product.emoji || '???'}</div>
+                      <div className="w-10 h-10 bg-muted/10 rounded-lg flex items-center justify-center text-xl">{getProductGlyph(item.product)}</div>
                       <div className="flex flex-col truncate">
                         <span className="text-[13px] font-bold text-text-primary truncate">{item.name || item.product.name}</span>
                         <span className="text-[11px] font-bold text-text-secondary mt-0.5 uppercase tracking-wide">Size: {item.selectedSize} • Qty: {item.qty}</span>

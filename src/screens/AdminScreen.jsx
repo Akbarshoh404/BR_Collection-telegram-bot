@@ -4,8 +4,10 @@ import { ArrowDown, ArrowUp, ChevronLeft, Edit2, ImagePlus, Package, Plus, Shiel
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { formatPrice } from '../utils/formatPrice'
+import { uploadImageToFirebase } from '../services/firebase'
 import { telegram } from '../utils/telegram'
 import { getProductImage } from '../utils/productMedia'
+import { getCategoryGlyph } from '../utils/iconMaps'
 
 const parseList = (value) => value.split(',').map((item) => item.trim()).filter(Boolean)
 
@@ -16,6 +18,10 @@ const AdminScreen = () => {
     orders,
     categories,
     setCategories,
+    homeBanners,
+    setHomeBanners,
+    promos,
+    setPromos,
     saleActive,
     setSaleActive,
     salePercent,
@@ -50,7 +56,22 @@ const AdminScreen = () => {
   })
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '?', description: '' })
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '✨', description: '' })
+  const [bannerFormData, setBannerFormData] = useState({
+    eyebrow: '',
+    title: '',
+    subtitle: '',
+    cta: '',
+    targetCollection: '',
+    image: '',
+  })
+  const [promoFormData, setPromoFormData] = useState({
+    code: '',
+    type: 'percent',
+    value: 10,
+    minTotal: 0,
+    description: '',
+  })
 
   useEffect(() => {
     if (currentUser && !currentUser.isAdmin) {
@@ -163,9 +184,19 @@ const AdminScreen = () => {
     setIsProductModalOpen(true)
   }
 
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]
     if (!file) {
+      return
+    }
+
+    const uploadedUrl = await uploadImageToFirebase(file, 'products')
+
+    if (uploadedUrl) {
+      setProductFormData((prev) => ({
+        ...prev,
+        imageUpload: uploadedUrl,
+      }))
       return
     }
 
@@ -224,7 +255,7 @@ const AdminScreen = () => {
       reviews: editingProduct?.reviews || [],
       createdAt: editingProduct?.createdAt || new Date().toISOString(),
       salesCount: editingProduct?.salesCount || 0,
-      emoji: editingProduct?.emoji || '???',
+      emoji: editingProduct?.emoji || getCategoryGlyph(productFormData.category),
     }
 
     setProducts((prev) => editingProduct ? prev.map((product) => (product.id === nextProduct.id ? nextProduct : product)) : [nextProduct, ...prev])
@@ -242,7 +273,7 @@ const AdminScreen = () => {
     }
 
     setCategories((prev) => [...prev, nextCategory])
-    setCategoryFormData({ name: '', icon: '?', description: '' })
+    setCategoryFormData({ name: '', icon: '✨', description: '' })
     setIsCategoryModalOpen(false)
   }
 
@@ -260,6 +291,64 @@ const AdminScreen = () => {
     })
   }
 
+  const handleSaveBanner = (event) => {
+    event.preventDefault()
+
+    const nextBanner = {
+      id: `banner_${Date.now()}`,
+      ...bannerFormData,
+    }
+
+    setHomeBanners((prev) => [nextBanner, ...(prev || [])].slice(0, 8))
+    setBannerFormData({
+      eyebrow: '',
+      title: '',
+      subtitle: '',
+      cta: '',
+      targetCollection: '',
+      image: '',
+    })
+  }
+
+  const handleDeleteBanner = (bannerId) => {
+    setHomeBanners((prev) => prev.filter((banner) => banner.id !== bannerId))
+  }
+
+  const handleSavePromo = (event) => {
+    event.preventDefault()
+
+    const code = promoFormData.code.trim().toUpperCase()
+    if (!code) {
+      return
+    }
+
+    setPromos((prev) => ({
+      ...prev,
+      [code]: {
+        type: promoFormData.type,
+        value: Number(promoFormData.value),
+        minTotal: Number(promoFormData.minTotal) || 0,
+        description: promoFormData.description,
+      },
+    }))
+
+    setPromoFormData({
+      code: '',
+      type: 'percent',
+      value: 10,
+      minTotal: 0,
+      description: '',
+    })
+  }
+
+  const handleDeletePromo = (code) => {
+    setPromos((prev) => {
+      const next = { ...prev }
+      delete next[code]
+      return next
+    })
+  }
+
   return (
     <motion.div initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '-30%', opacity: 0 }} transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }} className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center justify-between shadow-sm">
@@ -271,7 +360,7 @@ const AdminScreen = () => {
       </header>
 
       <div className="bg-surface border-b border-border/50 px-4 py-3 flex justify-between space-x-2 shadow-[0_4px_10px_rgba(0,0,0,0.02)] sticky top-[60px] z-30">
-        {['dashboard', 'products', 'categories'].map((tab) => (
+        {['dashboard', 'products', 'categories', 'marketing'].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === tab ? 'bg-primary text-white shadow-md' : 'bg-transparent text-text-secondary border border-border/60 hover:bg-muted/10'}`}>
             {tab}
           </button>
@@ -360,7 +449,7 @@ const AdminScreen = () => {
                   {categoryAnalytics.map((category) => (
                     <div key={category.id} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center justify-between gap-3">
                       <div>
-                        <p className="font-bold text-primary">{category.icon} {category.name}</p>
+                        <p className="font-bold text-primary">{category.icon || getCategoryGlyph(category.id)} {category.name}</p>
                         <p className="text-[12px] text-text-secondary mt-1">{category.productCount} products</p>
                       </div>
                       <span className="text-[12px] font-bold text-success">{formatPrice(category.revenue)}</span>
@@ -431,7 +520,7 @@ const AdminScreen = () => {
             </div>
             {categories.map((category, index) => (
               <div key={category.id} className="bg-surface border border-border/60 rounded-[22px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border/60 flex items-center justify-center text-2xl">{category.icon}</div>
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border/60 flex items-center justify-center text-2xl">{category.icon || getCategoryGlyph(category.id)}</div>
                 <div className="flex-1">
                   <p className="font-bold text-[15px] text-primary">{category.name}</p>
                   <p className="text-[12px] text-text-secondary mt-1">{category.description}</p>
@@ -442,6 +531,75 @@ const AdminScreen = () => {
                 </div>
               </div>
             ))}
+          </motion.div>
+        )}
+
+        {activeTab === 'marketing' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="rounded-[28px] bg-surface border border-border/60 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center gap-2 mb-4">
+                <ImagePlus size={18} className="text-accent-gold" />
+                <h3 className="font-serif font-bold text-[22px] text-primary">Homepage Carousel</h3>
+              </div>
+              <form onSubmit={handleSaveBanner} className="space-y-3">
+                <input value={bannerFormData.eyebrow} onChange={(event) => setBannerFormData((prev) => ({ ...prev, eyebrow: event.target.value }))} className="input-luxury" placeholder="Eyebrow text" required />
+                <input value={bannerFormData.title} onChange={(event) => setBannerFormData((prev) => ({ ...prev, title: event.target.value }))} className="input-luxury" placeholder="Banner title" required />
+                <textarea value={bannerFormData.subtitle} onChange={(event) => setBannerFormData((prev) => ({ ...prev, subtitle: event.target.value }))} rows={3} className="input-luxury resize-none" placeholder="Banner subtitle" required />
+                <div className="grid grid-cols-2 gap-3">
+                  <input value={bannerFormData.cta} onChange={(event) => setBannerFormData((prev) => ({ ...prev, cta: event.target.value }))} className="input-luxury" placeholder="CTA label" required />
+                  <input value={bannerFormData.targetCollection} onChange={(event) => setBannerFormData((prev) => ({ ...prev, targetCollection: event.target.value }))} className="input-luxury" placeholder="Target collection" required />
+                </div>
+                <input value={bannerFormData.image} onChange={(event) => setBannerFormData((prev) => ({ ...prev, image: event.target.value }))} className="input-luxury" placeholder="Banner image URL" required />
+                <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-bold">Add Banner</button>
+              </form>
+              <div className="mt-5 space-y-3">
+                {homeBanners.map((banner) => (
+                  <div key={banner.id} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center gap-3">
+                    <img src={banner.image} alt={banner.title} className="w-16 h-16 rounded-2xl object-cover border border-border/50" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-accent-gold">{banner.eyebrow}</p>
+                      <p className="font-bold text-primary truncate">{banner.title}</p>
+                      <p className="text-[12px] text-text-secondary truncate">{banner.targetCollection}</p>
+                    </div>
+                    <button onClick={() => handleDeleteBanner(banner.id)} className="px-3 py-2 rounded-full border border-border/60 bg-surface text-primary text-[12px] font-bold">Delete</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[28px] bg-surface border border-border/60 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center gap-2 mb-4">
+                <Tags size={18} className="text-accent-gold" />
+                <h3 className="font-serif font-bold text-[22px] text-primary">Promo Codes</h3>
+              </div>
+              <form onSubmit={handleSavePromo} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <input value={promoFormData.code} onChange={(event) => setPromoFormData((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))} className="input-luxury" placeholder="PROMO2026" required />
+                  <select value={promoFormData.type} onChange={(event) => setPromoFormData((prev) => ({ ...prev, type: event.target.value }))} className="input-luxury appearance-none">
+                    <option value="percent">Percent</option>
+                    <option value="fixed">Fixed UZS</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <input type="number" value={promoFormData.value} onChange={(event) => setPromoFormData((prev) => ({ ...prev, value: event.target.value }))} className="input-luxury" placeholder="Value" required />
+                  <input type="number" value={promoFormData.minTotal} onChange={(event) => setPromoFormData((prev) => ({ ...prev, minTotal: event.target.value }))} className="input-luxury" placeholder="Min order total" />
+                </div>
+                <textarea value={promoFormData.description} onChange={(event) => setPromoFormData((prev) => ({ ...prev, description: event.target.value }))} rows={2} className="input-luxury resize-none" placeholder="Promo description" required />
+                <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-bold">Save Promo</button>
+              </form>
+              <div className="mt-5 space-y-3">
+                {Object.entries(promos).map(([code, promo]) => (
+                  <div key={code} className="rounded-[20px] border border-border/60 bg-background p-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-primary">{code}</p>
+                      <p className="text-[12px] text-text-secondary mt-1">{promo.description}</p>
+                      <p className="text-[12px] text-accent-gold mt-1">{promo.type === 'percent' ? `${promo.value}% off` : `${promo.value} UZS off`}{promo.minTotal ? ` • min ${formatPrice(promo.minTotal)}` : ''}</p>
+                    </div>
+                    <button onClick={() => handleDeletePromo(code)} className="px-3 py-2 rounded-full border border-border/60 bg-surface text-primary text-[12px] font-bold">Delete</button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
       </div>

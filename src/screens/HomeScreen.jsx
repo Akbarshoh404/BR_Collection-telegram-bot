@@ -4,6 +4,7 @@ import { ArrowRight, MessageCircle, Search, ShieldCheck, SlidersHorizontal, Truc
 import { AppContext } from '../context/AppContext'
 import ProductCard from '../components/ProductCard'
 import { formatPrice } from '../utils/formatPrice'
+import { getCategoryGlyph } from '../utils/iconMaps'
 
 const sortOptions = [
   { value: 'featured', label: 'Featured' },
@@ -29,6 +30,7 @@ const HomeScreen = () => {
     faq,
     policies,
     contactInfo,
+    homeBanners,
   } = useContext(AppContext)
 
   const [activeTab, setActiveTab] = useState('all')
@@ -38,6 +40,7 @@ const HomeScreen = () => {
   const [stockOnly, setStockOnly] = useState(false)
   const [saleOnly, setSaleOnly] = useState(false)
   const [collectionFilter, setCollectionFilter] = useState('all')
+  const [activeBanner, setActiveBanner] = useState(0)
 
   const deferredSearch = useDeferredValue(searchQuery)
   const maxPrice = useMemo(
@@ -49,6 +52,18 @@ const HomeScreen = () => {
   React.useEffect(() => {
     setPriceCap((current) => (current > maxPrice ? maxPrice : current || maxPrice))
   }, [maxPrice])
+
+  React.useEffect(() => {
+    if (!homeBanners?.length) {
+      return undefined
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveBanner((current) => (current + 1) % homeBanners.length)
+    }, 4500)
+
+    return () => window.clearInterval(intervalId)
+  }, [homeBanners])
 
   const filteredProducts = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase()
@@ -96,27 +111,14 @@ const HomeScreen = () => {
     return result
   }, [activeTab, collectionFilter, deferredSearch, getProductPrice, priceCap, products, saleActive, saleOnly, sortBy, stockOnly])
 
-  const recentlyViewedProducts = recentlyViewed
-    .map((productId) => products.find((product) => product.id === productId))
-    .filter(Boolean)
-
+  const recentlyViewedProducts = recentlyViewed.map((productId) => products.find((product) => product.id === productId)).filter(Boolean)
   const featuredInsights = [
-    {
-      title: 'Fast Delivery',
-      body: policies.shipping,
-      icon: <Truck size={18} />,
-    },
-    {
-      title: 'Easy Exchanges',
-      body: policies.returns,
-      icon: <ShieldCheck size={18} />,
-    },
-    {
-      title: 'Concierge Support',
-      body: `Telegram ${contactInfo.telegram} or call ${contactInfo.phone}.`,
-      icon: <MessageCircle size={18} />,
-    },
+    { title: 'Fast Delivery', body: policies.shipping, icon: <Truck size={18} /> },
+    { title: 'Easy Exchanges', body: policies.returns, icon: <ShieldCheck size={18} /> },
+    { title: 'Concierge Support', body: `Telegram ${contactInfo.telegram} or call ${contactInfo.phone}.`, icon: <MessageCircle size={18} /> },
   ]
+
+  const currentBanner = homeBanners?.[activeBanner] || featuredCollections?.[0]
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-safe bg-background min-h-screen">
@@ -125,11 +127,11 @@ const HomeScreen = () => {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-accent-gold">BR Collection</p>
             <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="font-serif text-[28px] font-bold tracking-tight text-primary">
-              Refined Telegram Shopping
+              Luxury shopping, reimagined for Telegram
             </motion.h1>
           </div>
           <div className="w-11 h-11 rounded-full bg-accent-gold/10 flex items-center justify-center text-accent-gold shadow-inner border border-accent-gold/10">
-            ?
+            ✦
           </div>
         </div>
 
@@ -148,10 +150,7 @@ const HomeScreen = () => {
                 <X size={16} strokeWidth={2.5} />
               </button>
             )}
-            <button
-              onClick={() => setShowFilters((value) => !value)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-colors ${showFilters ? 'bg-primary text-white border-primary' : 'bg-surface text-primary border-border/60'}`}
-            >
+            <button onClick={() => setShowFilters((value) => !value)} className={`w-9 h-9 rounded-full flex items-center justify-center border transition-colors ${showFilters ? 'bg-primary text-white border-primary' : 'bg-surface text-primary border-border/60'}`}>
               <SlidersHorizontal size={16} />
             </button>
           </div>
@@ -162,7 +161,7 @@ const HomeScreen = () => {
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gradient-to-r from-accent-gold/15 to-accent-gold/5 border-b border-accent-gold/20 py-3.5 px-4 text-center overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-r from-accent-gold/20 to-transparent w-1/2 -skew-x-12 translate-x-[-150%] animate-[shimmer_3s_infinite]" />
           <span className="text-accent-gold font-extrabold text-[12px] uppercase tracking-widest relative z-10 drop-shadow-sm">
-            ?? {saleMessage} (-{salePercent}%)
+            Sale Live: {saleMessage} (-{salePercent}%)
           </span>
         </motion.div>
       )}
@@ -175,9 +174,7 @@ const HomeScreen = () => {
                 <label className="rounded-2xl border border-border/60 bg-background p-3 text-[12px] font-bold text-text-secondary">
                   <span className="block mb-2 uppercase tracking-widest text-[10px]">Sort</span>
                   <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="w-full bg-transparent text-primary text-[13px] font-bold outline-none">
-                    {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
+                    {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </label>
                 <div className="rounded-2xl border border-border/60 bg-background p-3">
@@ -188,15 +185,9 @@ const HomeScreen = () => {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => setStockOnly((value) => !value)} className={`px-4 py-2 rounded-full text-[12px] font-bold border transition-colors ${stockOnly ? 'bg-primary text-white border-primary' : 'bg-background text-primary border-border/60'}`}>
-                  In Stock Only
-                </button>
-                <button onClick={() => setSaleOnly((value) => !value)} className={`px-4 py-2 rounded-full text-[12px] font-bold border transition-colors ${saleOnly ? 'bg-accent-gold text-white border-accent-gold' : 'bg-background text-primary border-border/60'}`}>
-                  Sale Only
-                </button>
-                <button onClick={() => { setCollectionFilter('all'); setStockOnly(false); setSaleOnly(false); setPriceCap(maxPrice); setSortBy('featured'); }} className="px-4 py-2 rounded-full text-[12px] font-bold border border-border/60 bg-background text-primary">
-                  Reset Filters
-                </button>
+                <button onClick={() => setStockOnly((value) => !value)} className={`px-4 py-2 rounded-full text-[12px] font-bold border transition-colors ${stockOnly ? 'bg-primary text-white border-primary' : 'bg-background text-primary border-border/60'}`}>In Stock Only</button>
+                <button onClick={() => setSaleOnly((value) => !value)} className={`px-4 py-2 rounded-full text-[12px] font-bold border transition-colors ${saleOnly ? 'bg-accent-gold text-white border-accent-gold' : 'bg-background text-primary border-border/60'}`}>Sale Only</button>
+                <button onClick={() => { setCollectionFilter('all'); setStockOnly(false); setSaleOnly(false); setPriceCap(maxPrice); setSortBy('featured'); }} className="px-4 py-2 rounded-full text-[12px] font-bold border border-border/60 bg-background text-primary">Reset Filters</button>
               </div>
             </div>
           </motion.div>
@@ -205,17 +196,24 @@ const HomeScreen = () => {
 
       {!searchQuery && (
         <section className="px-5 pt-6 pb-2 space-y-4">
-          <div className="bg-[radial-gradient(circle_at_top_left,_rgba(184,149,42,0.22),_transparent_35%),linear-gradient(135deg,_#151515,_#222_65%,_#2F2A20)] text-white rounded-[30px] p-6 relative overflow-hidden shadow-[0_16px_34px_rgba(0,0,0,0.18)] min-h-[190px] border border-white/5">
-            <img src={featuredCollections[0]?.cover} alt="Featured collection" className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-screen" />
-            <div className="relative z-10 max-w-[70%]">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-accent-gold mb-2 block">Curated Drop</span>
-              <h2 className="font-serif text-[28px] font-bold leading-[1.02] mb-3">Collections designed for confident dressing.</h2>
-              <p className="text-[13px] text-white/75 leading-relaxed mb-4">Discover best sellers, fresh arrivals, and clean tailoring essentials built for Telegram-native shopping.</p>
-              <button onClick={() => setCollectionFilter(featuredCollections[0]?.name || 'all')} className="bg-white text-primary px-5 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider shadow-md inline-flex items-center gap-2">
-                Explore Collection
+          <div className="bg-[radial-gradient(circle_at_top_left,_rgba(184,149,42,0.22),_transparent_35%),linear-gradient(135deg,_#151515,_#222_65%,_#2F2A20)] text-white rounded-[30px] p-6 relative overflow-hidden shadow-[0_16px_34px_rgba(0,0,0,0.18)] min-h-[210px] border border-white/5">
+            <img src={currentBanner?.image || currentBanner?.cover} alt="Homepage banner" className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-screen" />
+            <div className="relative z-10 max-w-[72%]">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-accent-gold mb-2 block">{currentBanner?.eyebrow || 'Curated Drop'}</span>
+              <h2 className="font-serif text-[28px] font-bold leading-[1.02] mb-3">{currentBanner?.title || 'Collections designed for confident dressing.'}</h2>
+              <p className="text-[13px] text-white/75 leading-relaxed mb-4">{currentBanner?.subtitle || currentBanner?.description}</p>
+              <button onClick={() => setCollectionFilter(currentBanner?.targetCollection || featuredCollections?.[0]?.name || 'all')} className="bg-white text-primary px-5 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider shadow-md inline-flex items-center gap-2">
+                {currentBanner?.cta || 'Explore Collection'}
                 <ArrowRight size={14} />
               </button>
             </div>
+            {homeBanners?.length > 1 && (
+              <div className="absolute bottom-5 right-5 z-10 flex gap-2">
+                {homeBanners.map((banner, index) => (
+                  <button key={banner.id} onClick={() => setActiveBanner(index)} className={`h-2 rounded-full transition-all ${index === activeBanner ? 'w-8 bg-accent-gold' : 'w-2 bg-white/50'}`} />
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
@@ -233,12 +231,12 @@ const HomeScreen = () => {
       <div className="px-5 py-6">
         <div className="flex space-x-3 overflow-x-auto no-scrollbar pb-2 min-w-max -mx-5 px-5 pt-1">
           <motion.button onClick={() => setActiveTab('all')} whileTap={{ scale: 0.95 }} className={`flex flex-col items-center justify-center space-y-2 px-6 py-4 rounded-2xl min-w-[95px] transition-all duration-300 ${activeTab === 'all' ? 'bg-[#1A1A1A] text-white shadow-[0_8px_15px_rgba(26,26,26,0.3)] scale-[1.02]' : 'bg-surface border border-border/80 text-text-secondary hover:bg-border/30 shadow-sm'}`}>
-            <span className="text-xl">?</span>
+            <span className="text-xl">✦</span>
             <span className={`text-[11px] font-bold uppercase tracking-wider ${activeTab === 'all' ? 'text-white' : 'text-text-secondary'}`}>All</span>
           </motion.button>
           {categories.map((category) => (
             <motion.button key={category.id} onClick={() => setActiveTab(category.id)} whileTap={{ scale: 0.95 }} className={`flex flex-col items-center justify-center space-y-2 px-6 py-4 rounded-[20px] min-w-[110px] transition-all duration-300 ${activeTab === category.id ? 'bg-[#1A1A1A] text-white shadow-[0_8px_15px_rgba(26,26,26,0.3)] scale-[1.02]' : 'bg-surface border border-border/80 text-text-secondary hover:bg-border/30 shadow-sm'}`}>
-              <span className="text-[26px]">{category.icon}</span>
+              <span className="text-[26px]">{getCategoryGlyph(category.id)}</span>
               <span className={`text-[11px] font-bold uppercase tracking-wider ${activeTab === category.id ? 'text-white' : 'text-text-secondary'}`}>{category.name}</span>
             </motion.button>
           ))}
@@ -255,9 +253,7 @@ const HomeScreen = () => {
 
       <div className="px-4 grid grid-cols-2 gap-3.5 pb-6">
         <AnimatePresence>
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
         </AnimatePresence>
         {filteredProducts.length === 0 && (
           <div className="col-span-2 flex flex-col items-center justify-center py-16 text-center bg-surface border border-border/50 rounded-[24px] shadow-sm">
@@ -272,43 +268,22 @@ const HomeScreen = () => {
         <div className="space-y-8 pb-8">
           {bestSellers.length > 0 && (
             <section className="px-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-serif text-[22px] font-bold text-primary">Best Sellers</h3>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">Most Ordered</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3.5">
-                {bestSellers.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <div className="flex items-center justify-between mb-4"><h3 className="font-serif text-[22px] font-bold text-primary">Best Sellers</h3><span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">Most Ordered</span></div>
+              <div className="grid grid-cols-2 gap-3.5">{bestSellers.map((product) => <ProductCard key={product.id} product={product} />)}</div>
             </section>
           )}
 
           {newArrivals.length > 0 && (
             <section className="px-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-serif text-[22px] font-bold text-primary">New Arrivals</h3>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-accent-gold">Fresh Drop</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3.5">
-                {newArrivals.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <div className="flex items-center justify-between mb-4"><h3 className="font-serif text-[22px] font-bold text-primary">New Arrivals</h3><span className="text-[11px] font-bold uppercase tracking-widest text-accent-gold">Fresh Drop</span></div>
+              <div className="grid grid-cols-2 gap-3.5">{newArrivals.map((product) => <ProductCard key={product.id} product={product} />)}</div>
             </section>
           )}
 
           {recentlyViewedProducts.length > 0 && (
             <section className="px-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-serif text-[22px] font-bold text-primary">Recently Viewed</h3>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">Continue Browsing</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3.5">
-                {recentlyViewedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <div className="flex items-center justify-between mb-4"><h3 className="font-serif text-[22px] font-bold text-primary">Recently Viewed</h3><span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">Continue Browsing</span></div>
+              <div className="grid grid-cols-2 gap-3.5">{recentlyViewedProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div>
             </section>
           )}
 
@@ -327,10 +302,7 @@ const HomeScreen = () => {
           </section>
 
           <section className="px-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-[22px] font-bold text-primary">FAQ</h3>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">Confidence Layer</span>
-            </div>
+            <div className="flex items-center justify-between"><h3 className="font-serif text-[22px] font-bold text-primary">FAQ</h3><span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">Confidence Layer</span></div>
             {faq.map((item) => (
               <div key={item.question} className="rounded-[22px] border border-border/60 bg-surface p-4 shadow-[0_8px_22px_rgba(0,0,0,0.03)]">
                 <h4 className="font-bold text-[15px] text-primary">{item.question}</h4>
@@ -345,4 +317,3 @@ const HomeScreen = () => {
 }
 
 export default HomeScreen
-

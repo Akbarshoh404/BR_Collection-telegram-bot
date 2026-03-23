@@ -7,13 +7,13 @@ import { motion } from 'framer-motion';
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cart } = useContext(AppContext);
+  const { cart, t } = useContext(AppContext);
 
   const tabs = [
-    { name: 'Home', path: '/home', icon: <Home size={22} strokeWidth={2} /> },
-    { name: 'Wishlist', path: '/wishlist', icon: <Heart size={22} strokeWidth={2} /> },
-    { name: 'Cart', path: '/cart', icon: <div className="relative"><ShoppingBag size={22} strokeWidth={2} />{cart.length > 0 && <span className="absolute -top-1.5 -right-1.5 bg-accent-gold text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm">{cart.length}</span>}</div> },
-    { name: 'Profile', path: '/profile', icon: <User size={22} strokeWidth={2} /> }
+    { name: t('home'), path: '/home', icon: <Home size={22} strokeWidth={2} /> },
+    { name: t('wishlist'), path: '/wishlist', icon: <Heart size={22} strokeWidth={2} /> },
+    { name: t('cart'), path: '/cart', icon: <div className="relative"><ShoppingBag size={22} strokeWidth={2} />{cart.length > 0 && <span className="absolute -top-1.5 -right-1.5 bg-accent-gold text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm">{cart.length}</span>}</div> },
+    { name: t('profile'), path: '/profile', icon: <User size={22} strokeWidth={2} /> }
   ];
 
   return (

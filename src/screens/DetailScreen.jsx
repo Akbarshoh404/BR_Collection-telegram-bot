@@ -22,12 +22,16 @@ const DetailScreen = () => {
     toggleFavorite,
     recordRecentlyViewed,
     policies,
+    currentUser,
+    setProducts,
   } = useContext(AppContext)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [activeImage, setActiveImage] = useState('')
   const [imageLoaded, setImageLoaded] = useState(false)
   const [cartFeedback, setCartFeedback] = useState('')
+  const [commentText, setCommentText] = useState('')
+  const [commentRating, setCommentRating] = useState(5)
 
   const product = products.find((item) => item.id === id)
 
@@ -102,6 +106,39 @@ const DetailScreen = () => {
 
     addToCart(product, selectedSize, 1, selectedColor)
     navigate('/cart')
+  }
+
+  const handleAddComment = () => {
+    if (!commentText.trim()) {
+      return
+    }
+
+    const nextReview = {
+      author: currentUser?.firstName || currentUser?.telegramId || 'Guest',
+      rating: Number(commentRating),
+      comment: commentText.trim(),
+    }
+
+    setProducts((prev) =>
+      prev.map((item) =>
+        item.id === product.id
+          ? {
+              ...item,
+              reviews: [nextReview, ...(item.reviews || [])],
+              reviewsCount: (item.reviewsCount || 0) + 1,
+              rating: Number(
+                (
+                  ((item.rating || 0) * (item.reviewsCount || 0) + nextReview.rating) /
+                  ((item.reviewsCount || 0) + 1)
+                ).toFixed(1),
+              ),
+            }
+          : item,
+      ),
+    )
+
+    setCommentText('')
+    setCommentRating(5)
   }
 
   return (
@@ -278,6 +315,37 @@ const DetailScreen = () => {
           <div className="flex items-center gap-2">
             <Truck size={18} className="text-accent-gold" />
             <h3 className="font-serif text-[22px] font-bold text-primary">Customer Reviews</h3>
+          </div>
+          <div className="rounded-[22px] border border-border/60 bg-background p-4 shadow-[0_6px_18px_rgba(0,0,0,0.03)] space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">
+                Rating
+                <select value={commentRating} onChange={(event) => setCommentRating(Number(event.target.value))} className="mt-2 w-full rounded-2xl border border-border/60 bg-surface px-4 py-3 text-[14px] font-bold text-primary outline-none">
+                  {[5, 4, 3, 2, 1].map((value) => (
+                    <option key={value} value={value}>{value} Stars</option>
+                  ))}
+                </select>
+              </label>
+              <div className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">
+                Author
+                <div className="mt-2 rounded-2xl border border-border/60 bg-surface px-4 py-3 text-[14px] font-bold text-primary">
+                  {currentUser?.firstName || currentUser?.telegramId || 'Guest'}
+                </div>
+              </div>
+            </div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-text-secondary">
+              Comment
+              <textarea
+                value={commentText}
+                onChange={(event) => setCommentText(event.target.value)}
+                rows={3}
+                className="mt-2 w-full rounded-2xl border border-border/60 bg-surface px-4 py-3 text-[14px] font-medium text-primary outline-none resize-none"
+                placeholder="Share your fit, fabric feel, or delivery experience"
+              />
+            </label>
+            <button onClick={handleAddComment} className="w-full rounded-2xl bg-primary px-4 py-3 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
+              Post Comment
+            </button>
           </div>
           {product.reviews?.map((review, index) => (
             <div key={`${review.author}-${index}`} className="rounded-[22px] border border-border/60 bg-background p-4 shadow-[0_6px_18px_rgba(0,0,0,0.03)]">
