@@ -1,11 +1,9 @@
 ﻿import { getApp, getApps, initializeApp } from 'firebase/app'
-import { getDatabase, onValue, ref, set } from 'firebase/database'
-import { getDownloadURL, getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
+import { doc, getDoc, getFirestore, onSnapshot, setDoc } from 'firebase/firestore'
 
 const fallbackFirebaseConfig = {
   apiKey: 'AIzaSyC2euMKW0qlGc8RhB1B5saMqEjYsijmwVg',
   authDomain: 'br-collection-851fc.firebaseapp.com',
-  databaseURL: 'https://br-collection-851fc-default-rtdb.firebaseio.com',
   projectId: 'br-collection-851fc',
   storageBucket: 'br-collection-851fc.firebasestorage.app',
   messagingSenderId: '97020310664',
@@ -15,7 +13,6 @@ const fallbackFirebaseConfig = {
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || fallbackFirebaseConfig.apiKey,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || fallbackFirebaseConfig.authDomain,
-  databaseURL: (import.meta.env.VITE_FIREBASE_DATABASE_URL || fallbackFirebaseConfig.databaseURL || '').replace(/\/+$/, ''),
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || fallbackFirebaseConfig.projectId,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || fallbackFirebaseConfig.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || fallbackFirebaseConfig.messagingSenderId,
@@ -24,65 +21,69 @@ const firebaseConfig = {
 
 const firebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
-    firebaseConfig.databaseURL &&
     firebaseConfig.projectId &&
     firebaseConfig.appId,
 )
 
-let database = null
-let storage = null
+let firestore = null
 
 if (firebaseConfigured) {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
-  database = getDatabase(app)
-  storage = getStorage(app)
+  firestore = getFirestore(app)
+}
+
+const toDocRef = (path) => {
+  if (!firestore || !path) {
+    return null
+  }
+
+  const segments = path.split('/').filter(Boolean)
+  if (segments.length % 2 !== 0) {
+    throw new Error(`Firestore document paths need an even number of segments. Received "${path}".`)
+  }
+
+  return doc(firestore, ...segments)
 }
 
 export const firebaseState = {
   configured: firebaseConfigured,
-  database,
-  storage,
+  firestore,
   config: firebaseConfig,
 }
 
-export const subscribeToPath = (path, callback) => {
-  if (!database) {
+export const subscribeToDoc = (path, callback, onError) => {
+  if (!firestore) {
     return () => {}
   }
 
-  const dbRef = ref(database, path)
-  return onValue(dbRef, (snapshot) => {
-    callback(snapshot.val())
-  })
+  const docRef = toDocRef(path)
+  return onSnapshot(
+    docRef,
+    (snapshot) => {
+      callback(snapshot.exists() ? snapshot.data() : null)
+    },
+    (error) => {
+      console.error(`Failed to subscribe to Firestore doc "${path}"`, error)
+      onError?.(error)
+    },
+  )
 }
 
-export const subscribeToConnectionState = (callback) => {
-  if (!database) {
-    callback(false)
-    return () => {}
-  }
-
-  const connectedRef = ref(database, '.info/connected')
-  return onValue(connectedRef, (snapshot) => {
-    callback(Boolean(snapshot.val()))
-  })
-}
-
-export const writePath = async (path, value) => {
-  if (!database) {
-    return false
-  }
-
-  await set(ref(database, path), value)
-  return true
-}
-
-export const uploadImageToFirebase = async (file, folder = 'products') => {
-  if (!storage || !file) {
+export const readDoc = async (path) => {
+  if (!firestore) {
     return null
   }
 
-  const fileRef = storageRef(storage, `${folder}/${Date.now()}-${file.name}`)
-  await uploadBytes(fileRef, file)
-  return getDownloadURL(fileRef)
+  const snapshot = await getDoc(toDocRef(path))
+  return snapshot.exists() ? snapshot.data() : null
 }
+
+export const writeDoc = async (path, value, options = {}) => {
+  if (!firestore) {
+    return false
+  }
+
+  await setDoc(toDocRef(path), value, { merge: Boolean(options.merge) })
+  return true
+}
+

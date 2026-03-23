@@ -4,12 +4,31 @@ import { ArrowDown, ArrowUp, ChevronLeft, Edit2, ImagePlus, Package, Plus, Shiel
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { formatPrice } from '../utils/formatPrice'
-import { uploadImageToFirebase } from '../services/firebase'
 import { telegram } from '../utils/telegram'
 import { getProductImage } from '../utils/productMedia'
 import { getCategoryGlyph } from '../utils/iconMaps'
 
 const parseList = (value) => value.split(',').map((item) => item.trim()).filter(Boolean)
+
+const normalizeImageUrl = (value) => {
+  const raw = value.trim()
+  if (!raw) {
+    return ''
+  }
+
+  const driveMatch = raw.match(/file\/d\/([^/]+)/i)
+  if (driveMatch?.[1]) {
+    return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`
+  }
+
+  const openMatch = raw.match(/[?&]id=([^&]+)/i)
+  if (/drive\.google\.com/i.test(raw) && openMatch?.[1]) {
+    return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`
+  }
+
+  return raw
+}
+
 
 const AdminScreen = () => {
   const {
@@ -56,7 +75,7 @@ const AdminScreen = () => {
   })
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '✨', description: '' })
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '?', description: '' })
   const [bannerFormData, setBannerFormData] = useState({
     eyebrow: '',
     title: '',
@@ -184,30 +203,13 @@ const AdminScreen = () => {
     setIsProductModalOpen(true)
   }
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) {
-      return
-    }
-
-    const uploadedUrl = await uploadImageToFirebase(file, 'products')
-
-    if (uploadedUrl) {
-      setProductFormData((prev) => ({
-        ...prev,
-        imageUpload: uploadedUrl,
-      }))
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      setProductFormData((prev) => ({
-        ...prev,
-        imageUpload: reader.result,
-      }))
-    }
-    reader.readAsDataURL(file)
+  const handleImageLinkChange = (value) => {
+    const normalized = normalizeImageUrl(value)
+    setProductFormData((prev) => ({
+      ...prev,
+      image: normalized,
+      imageUpload: normalized,
+    }))
   }
 
   const handleSaveProduct = (event) => {
@@ -273,7 +275,7 @@ const AdminScreen = () => {
     }
 
     setCategories((prev) => [...prev, nextCategory])
-    setCategoryFormData({ name: '', icon: '✨', description: '' })
+    setCategoryFormData({ name: '', icon: '?', description: '' })
     setIsCategoryModalOpen(false)
   }
 
@@ -297,6 +299,8 @@ const AdminScreen = () => {
     const nextBanner = {
       id: `banner_${Date.now()}`,
       ...bannerFormData,
+      image: normalizeImageUrl(bannerFormData.image),
+      image: normalizeImageUrl(bannerFormData.image),
     }
 
     setHomeBanners((prev) => [nextBanner, ...(prev || [])].slice(0, 8))
@@ -549,7 +553,7 @@ const AdminScreen = () => {
                   <input value={bannerFormData.cta} onChange={(event) => setBannerFormData((prev) => ({ ...prev, cta: event.target.value }))} className="input-luxury" placeholder="CTA label" required />
                   <input value={bannerFormData.targetCollection} onChange={(event) => setBannerFormData((prev) => ({ ...prev, targetCollection: event.target.value }))} className="input-luxury" placeholder="Target collection" required />
                 </div>
-                <input value={bannerFormData.image} onChange={(event) => setBannerFormData((prev) => ({ ...prev, image: event.target.value }))} className="input-luxury" placeholder="Banner image URL" required />
+                <input value={bannerFormData.image} onChange={(event) => setBannerFormData((prev) => ({ ...prev, image: normalizeImageUrl(event.target.value) }))} className="input-luxury" placeholder="Banner image URL or Google Drive share link" required />
                 <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-bold">Add Banner</button>
               </form>
               <div className="mt-5 space-y-3">
@@ -629,12 +633,8 @@ const AdminScreen = () => {
                 <input type="text" value={productFormData.badges} onChange={(event) => setProductFormData((prev) => ({ ...prev, badges: event.target.value }))} className="input-luxury" placeholder="Badges, comma separated" />
                 <input type="text" value={productFormData.featuredCollection} onChange={(event) => setProductFormData((prev) => ({ ...prev, featuredCollection: event.target.value }))} className="input-luxury" placeholder="Featured collection" />
                 <input type="number" min="0" max="80" value={productFormData.sale} onChange={(event) => setProductFormData((prev) => ({ ...prev, sale: event.target.value }))} className="input-luxury" placeholder="Sale %" />
-                <input type="url" value={productFormData.image} onChange={(event) => setProductFormData((prev) => ({ ...prev, image: event.target.value }))} className="input-luxury" placeholder="Image URL" />
-                <label className="rounded-[24px] border border-dashed border-border/70 bg-surface p-4 flex items-center gap-3 cursor-pointer text-primary font-bold">
-                  <ImagePlus size={18} className="text-accent-gold" />
-                  Upload product image
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                </label>
+                <input type="text" value={productFormData.image} onChange={(event) => handleImageLinkChange(event.target.value)} className="input-luxury" placeholder="Image URL or Google Drive share link" />
+                <div className="rounded-[24px] border border-dashed border-border/70 bg-surface p-4 text-[12px] font-medium text-text-secondary">Paste a direct image URL or a Google Drive share link. The app converts Drive links into a display-ready URL before saving to Firestore.</div>
                 {(productFormData.imageUpload || productFormData.image) && (
                   <img src={productFormData.imageUpload || productFormData.image} alt="Preview" className="w-full h-[180px] object-cover rounded-[24px] border border-border/60" />
                 )}
@@ -669,4 +669,5 @@ const AdminScreen = () => {
 }
 
 export default AdminScreen
+
 

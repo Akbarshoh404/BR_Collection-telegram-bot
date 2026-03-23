@@ -1,27 +1,27 @@
-const seedStoreData = {
+﻿const seedStoreData = {
   categories: [
     {
       id: 'cat_jackets',
       name: 'Jackets',
-      icon: '🧥',
+      icon: 'ðŸ§¥',
       description: 'Structured tailoring, evening layers, and signature outerwear.',
     },
     {
       id: 'cat_polos',
       name: 'Polos',
-      icon: '👕',
+      icon: 'ðŸ‘•',
       description: 'Refined knitwear and polished everyday essentials.',
     },
     {
       id: 'cat_pants',
       name: 'Pants',
-      icon: '👖',
+      icon: 'ðŸ‘–',
       description: 'Tailored trousers, chinos, and warm-season separates.',
     },
     {
       id: 'cat_accessories',
       name: 'Accessories',
-      icon: '🕶️',
+      icon: 'ðŸ•¶ï¸',
       description: 'Finishing details that elevate the full look.',
     },
   ],
@@ -55,7 +55,7 @@ const seedStoreData = {
         'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=80',
         'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '🕴️',
+      emoji: 'ðŸ•´ï¸',
       description: 'A clean slim blazer with sharp shoulders, soft structure, and a confident formal silhouette.',
       material: 'Italian wool blend with soft viscose lining',
       careInstructions: ['Dry clean only', 'Steam lightly before wear', 'Store on a shaped hanger'],
@@ -93,7 +93,7 @@ const seedStoreData = {
         'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?auto=format&fit=crop&w=900&q=80',
         'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '🧥',
+      emoji: 'ðŸ§¥',
       description: 'A versatile smart jacket designed for everyday polish with enough structure for evening wear.',
       material: 'Cotton twill shell with satin-touch interior piping',
       careInstructions: ['Machine wash cold on gentle cycle', 'Do not tumble dry', 'Cool iron on reverse'],
@@ -137,7 +137,7 @@ const seedStoreData = {
         'https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?auto=format&fit=crop&w=900&q=80',
         'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '👕',
+      emoji: 'ðŸ‘•',
       description: 'A polished signature polo with a smooth hand-feel, subtle contrast details, and a clean collar roll.',
       material: 'Mercerized cotton pique',
       careInstructions: ['Wash with similar colors', 'Reshape while damp', 'Avoid high heat drying'],
@@ -174,7 +174,7 @@ const seedStoreData = {
       gallery: [
         'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '👕',
+      emoji: 'ðŸ‘•',
       description: 'An earthy tailored polo with contrast trim and a richer evening-ready palette.',
       material: 'Midweight cotton knit',
       careInstructions: ['Cold wash only', 'Dry flat', 'Steam at low heat'],
@@ -210,7 +210,7 @@ const seedStoreData = {
       gallery: [
         'https://images.unsplash.com/photo-1621072156002-e2fccdc0b176?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '🧶',
+      emoji: 'ðŸ§¶',
       description: 'A knit polo built for smart-casual dressing with a soft stretch and easy drape.',
       material: 'Fine-gauge cotton blend',
       careInstructions: ['Hand wash recommended', 'Dry flat', 'Do not bleach'],
@@ -246,7 +246,7 @@ const seedStoreData = {
       gallery: [
         'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '👖',
+      emoji: 'ðŸ‘–',
       description: 'A precise chino with a tapered line and just enough structure for office or dinner styling.',
       material: 'Stretch cotton twill',
       careInstructions: ['Machine wash cold', 'Hang dry', 'Warm iron if needed'],
@@ -282,7 +282,7 @@ const seedStoreData = {
       gallery: [
         'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '👖',
+      emoji: 'ðŸ‘–',
       description: 'A smooth tailored trouser that lands between formal and relaxed, ideal for versatile looks.',
       material: 'Viscose blend suiting fabric',
       careInstructions: ['Dry clean preferred', 'Low steam touch-up'],
@@ -318,7 +318,7 @@ const seedStoreData = {
       gallery: [
         'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '🌴',
+      emoji: 'ðŸŒ´',
       description: 'Airy linen-blend trousers designed for warm days and resort-ready styling.',
       material: 'Linen-cotton blend',
       careInstructions: ['Gentle cold wash', 'Line dry', 'Steam for natural texture'],
@@ -354,7 +354,7 @@ const seedStoreData = {
       gallery: [
         'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=900&q=80',
       ],
-      emoji: '🕶️',
+      emoji: 'ðŸ•¶ï¸',
       description: 'Classic aviators with a warm gold-tone frame and lightly tinted premium lenses.',
       material: 'Metal frame with UV-protective lenses',
       careInstructions: ['Store in case', 'Clean with microfiber cloth'],
@@ -428,3 +428,4 @@ const seedStoreData = {
 }
 
 export default seedStoreData
+

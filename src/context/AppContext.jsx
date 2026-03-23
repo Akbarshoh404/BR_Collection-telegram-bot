@@ -1,6 +1,6 @@
 ﻿import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import seedStoreData from '../data/seedData'
-import { firebaseState, subscribeToConnectionState, subscribeToPath, writePath } from '../services/firebase'
+import { firebaseState, subscribeToDoc, writeDoc } from '../services/firebase'
 import { telegram } from '../utils/telegram'
 
 export const AppContext = createContext()
@@ -98,32 +98,32 @@ const translations = {
     checkout: 'Rasmiylashtirish',
   },
   ru: {
-    home: 'Главная',
-    wishlist: 'Избранное',
-    cart: 'Корзина',
-    profile: 'Профиль',
-    backendFirebaseLive: 'Firebase Подключен',
-    backendFirebaseReady: 'Firebase Готов',
-    backendLocalCache: 'Локальный Кэш',
-    language: 'Язык',
-    english: 'Английский',
-    uzbek: 'Узбекский',
-    russian: 'Русский',
-    contactSupport: 'Поддержка',
-    callBoutique: 'Позвонить в бутик',
-    realtimeSync: 'Синхронизация',
-    myOrders: 'Мои заказы',
-    settingsSyncDescription: 'Корзина, избранное и данные оформления сохраняются автоматически.',
-    adminAccess: 'Вход администратора',
-    allOrders: 'Все заказы',
-    continueToCheckout: 'Перейти к оформлению',
-    orderReceived: 'Заказ получен',
-    startShopping: 'Начать покупки',
-    placeOrderSecurely: 'Оформить заказ',
-    paymentAndNotes: 'Оплата и заметки',
-    delivery: 'Доставка',
-    orderReview: 'Проверка заказа',
-    checkout: 'Оформление',
+    home: '???????',
+    wishlist: '?????????',
+    cart: '???????',
+    profile: '???????',
+    backendFirebaseLive: 'Firebase ?????????',
+    backendFirebaseReady: 'Firebase ?????',
+    backendLocalCache: '????????? ???',
+    language: '????',
+    english: '??????????',
+    uzbek: '?????????',
+    russian: '???????',
+    contactSupport: '?????????',
+    callBoutique: '????????? ? ?????',
+    realtimeSync: '?????????????',
+    myOrders: '??? ??????',
+    settingsSyncDescription: '???????, ????????? ? ?????? ?????????? ??????????? ?????????????.',
+    adminAccess: '???? ??????????????',
+    allOrders: '??? ??????',
+    continueToCheckout: '??????? ? ??????????',
+    orderReceived: '????? ???????',
+    startShopping: '?????? ???????',
+    placeOrderSecurely: '???????? ?????',
+    paymentAndNotes: '?????? ? ???????',
+    delivery: '????????',
+    orderReview: '???????? ??????',
+    checkout: '??????????',
   },
 }
 
@@ -257,7 +257,7 @@ export const AppProvider = ({ children }) => {
     saveJson(STORE_CACHE_KEY, normalized)
 
     if (firebaseState.configured) {
-      writePath('store', normalized).catch((error) => {
+      writeDoc('app/store', normalized).catch((error) => {
         console.error('Failed to persist store data', error)
       })
     }
@@ -269,7 +269,7 @@ export const AppProvider = ({ children }) => {
       saveJson(STORE_CACHE_KEY, next)
 
       if (firebaseState.configured) {
-        writePath('store', next).catch((error) => {
+        writeDoc('app/store', next).catch((error) => {
           console.error('Failed to persist store data', error)
         })
       }
@@ -284,7 +284,7 @@ export const AppProvider = ({ children }) => {
     saveJson(getSessionStorageKey(key), normalized)
 
     if (firebaseState.configured) {
-      writePath(`sessions/${key}`, normalized).catch((error) => {
+      writeDoc(`usersessions/${key}`, normalized).catch((error) => {
         console.error('Failed to persist session data', error)
       })
     }
@@ -296,7 +296,7 @@ export const AppProvider = ({ children }) => {
       saveJson(getSessionStorageKey(sessionKey), next)
 
       if (firebaseState.configured) {
-        writePath(`sessions/${sessionKey}`, next).catch((error) => {
+        writeDoc(`usersessions/${sessionKey}`, next).catch((error) => {
           console.error('Failed to persist session data', error)
         })
       }
@@ -312,15 +312,12 @@ export const AppProvider = ({ children }) => {
 
     setBackendMode('firebase-ready')
 
-    const unsubscribeConnection = subscribeToConnectionState((connected) => {
-      setBackendMode(connected ? 'firebase-live' : 'firebase-ready')
-    })
-
-    const unsubscribe = subscribeToPath('store', (value) => {
+    const unsubscribe = subscribeToDoc('app/store', (value) => {
+      setBackendMode('firebase-live')
       if (!value) {
         const seeded = normalizeStoreData(clone(seedStoreData))
         saveJson(STORE_CACHE_KEY, seeded)
-        writePath('store', seeded).catch((error) => {
+        writeDoc('app/store', seeded).catch((error) => {
           console.error('Failed to seed Firebase store', error)
         })
         setStoreDataState(seeded)
@@ -331,10 +328,12 @@ export const AppProvider = ({ children }) => {
       }
 
       setStoreReady(true)
+    }, () => {
+      setBackendMode('local-cache')
+      setStoreReady(true)
     })
 
     return () => {
-      unsubscribeConnection()
       unsubscribe()
     }
   }, [])
@@ -382,11 +381,11 @@ export const AppProvider = ({ children }) => {
       return undefined
     }
 
-    const unsubscribe = subscribeToPath(`sessions/${sessionKey}`, (value) => {
+    const unsubscribe = subscribeToDoc(`usersessions/${sessionKey}`, (value) => {
       if (!value) {
         const fresh = normalizeSession(getSessionDefaults())
         saveJson(getSessionStorageKey(sessionKey), fresh)
-        writePath(`sessions/${sessionKey}`, fresh).catch((error) => {
+        writeDoc(`usersessions/${sessionKey}`, fresh).catch((error) => {
           console.error('Failed to seed user session', error)
         })
         setSessionDataState(fresh)
@@ -888,5 +887,11 @@ export const AppProvider = ({ children }) => {
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
+
+
+
+
+
+
 
 
