@@ -200,8 +200,8 @@ const ConfirmScreen = () => {
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Phone Confirmation</label>
             <div className="relative">
-              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
-              <input value={checkoutDraft.phone} onChange={(event) => updateCheckoutDraft({ phone: event.target.value })} className="input-luxury pl-11 font-medium" placeholder="+998 90 123 45 67" />
+              <Phone size={16} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input value={checkoutDraft.phone} onChange={(event) => updateCheckoutDraft({ phone: event.target.value })} className="input-luxury pl-14 font-medium" placeholder="+998 90 123 45 67" />
             </div>
           </div>
           <div className="rounded-[18px] bg-background border border-border/60 p-4 text-[13px] text-text-secondary leading-relaxed">
@@ -221,8 +221,8 @@ const ConfirmScreen = () => {
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Promo Code</label>
             <div className="relative">
-              <TicketPercent size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
-              <input value={checkoutDraft.promoCode} onChange={(event) => updateCheckoutDraft({ promoCode: event.target.value.toUpperCase() })} className="input-luxury pl-11 font-medium" placeholder="BRVIP or WELCOME5" />
+              <TicketPercent size={16} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input value={checkoutDraft.promoCode} onChange={(event) => updateCheckoutDraft({ promoCode: event.target.value.toUpperCase() })} className="input-luxury pl-14 font-medium" placeholder="BRVIP or WELCOME5" />
             </div>
             {checkoutDraft.promoCode && (
               <p className={`text-[12px] mt-2 ${promoState.valid ? 'text-success' : 'text-error'}`}>{promoState.description}</p>
@@ -231,8 +231,8 @@ const ConfirmScreen = () => {
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Order Notes</label>
             <div className="relative">
-              <MessageSquareText size={16} className="absolute left-4 top-4 text-text-secondary" />
-              <textarea value={checkoutDraft.orderNotes} onChange={(event) => updateCheckoutDraft({ orderNotes: event.target.value })} rows={3} className="input-luxury pl-11 resize-none font-medium" placeholder="Tailoring preference, call before delivery, gift wrapping, and so on" />
+              <MessageSquareText size={16} className="pointer-events-none absolute left-5 top-5 text-text-secondary" />
+              <textarea value={checkoutDraft.orderNotes} onChange={(event) => updateCheckoutDraft({ orderNotes: event.target.value })} rows={3} className="input-luxury pl-14 pt-5 resize-none font-medium" placeholder="Tailoring preference, call before delivery, gift wrapping, and so on" />
             </div>
           </div>
         </div>

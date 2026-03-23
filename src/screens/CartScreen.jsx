@@ -45,7 +45,7 @@ const CartScreen = () => {
       {cart.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="w-24 h-24 bg-muted/10 rounded-full flex items-center justify-center mb-6 shadow-inner border border-border/40">
-            <span className="text-4xl grayscale opacity-50">??</span>
+            <ShoppingBag size={36} className="text-text-muted opacity-60" />
           </div>
           <h2 className="text-2xl font-serif font-bold mb-2">Your Bag is Empty</h2>
           <p className="text-text-secondary text-sm mb-10 max-w-[80%]">Looks like you have not added anything yet. Your selected pieces will live here before checkout.</p>
@@ -130,4 +130,5 @@ const CartScreen = () => {
 }
 
 export default CartScreen
+
 

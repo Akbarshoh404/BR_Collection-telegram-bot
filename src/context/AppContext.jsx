@@ -1,6 +1,6 @@
 ﻿import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import seedStoreData from '../data/seedData'
-import { firebaseState, subscribeToPath, writePath } from '../services/firebase'
+import { firebaseState, subscribeToConnectionState, subscribeToPath, writePath } from '../services/firebase'
 import { telegram } from '../utils/telegram'
 
 export const AppContext = createContext()
@@ -135,7 +135,7 @@ export const AppProvider = ({ children }) => {
   const [sessionKey, setSessionKey] = useState('guest')
   const [sessionData, setSessionDataState] = useState(() => normalizeSession(loadJson(getSessionStorageKey('guest'), getSessionDefaults())))
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => loadJson('br-collection-onboarding', false))
-  const [backendMode, setBackendMode] = useState(firebaseState.configured ? 'firebase' : 'local-cache')
+  const [backendMode, setBackendMode] = useState(firebaseState.configured ? 'firebase-ready' : 'local-cache')
   const [storeReady, setStoreReady] = useState(!firebaseState.configured)
 
   const commitStore = useCallback((nextStore) => {
@@ -197,7 +197,11 @@ export const AppProvider = ({ children }) => {
       return undefined
     }
 
-    setBackendMode('firebase')
+    setBackendMode('firebase-ready')
+
+    const unsubscribeConnection = subscribeToConnectionState((connected) => {
+      setBackendMode(connected ? 'firebase-live' : 'firebase-ready')
+    })
 
     const unsubscribe = subscribeToPath('store', (value) => {
       if (!value) {
@@ -216,7 +220,10 @@ export const AppProvider = ({ children }) => {
       setStoreReady(true)
     })
 
-    return unsubscribe
+    return () => {
+      unsubscribeConnection()
+      unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
@@ -735,4 +742,5 @@ export const AppProvider = ({ children }) => {
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
+
 
