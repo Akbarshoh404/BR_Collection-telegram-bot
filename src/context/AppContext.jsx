@@ -1,6 +1,6 @@
 ﻿import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import seedStoreData from '../data/seedData'
-import { firebaseState, subscribeToDoc, writeDoc } from '../services/firebase'
+import { firebaseState, subscribeToPath, writePath } from '../services/firebase'
 import { telegram } from '../utils/telegram'
 
 export const AppContext = createContext()
@@ -257,7 +257,7 @@ export const AppProvider = ({ children }) => {
     saveJson(STORE_CACHE_KEY, normalized)
 
     if (firebaseState.configured) {
-      writeDoc('app/store', normalized).catch((error) => {
+      writePath('store', normalized).catch((error) => {
         console.error('Failed to persist store data', error)
       })
     }
@@ -269,7 +269,7 @@ export const AppProvider = ({ children }) => {
       saveJson(STORE_CACHE_KEY, next)
 
       if (firebaseState.configured) {
-        writeDoc('app/store', next).catch((error) => {
+        writePath('store', next).catch((error) => {
           console.error('Failed to persist store data', error)
         })
       }
@@ -284,7 +284,7 @@ export const AppProvider = ({ children }) => {
     saveJson(getSessionStorageKey(key), normalized)
 
     if (firebaseState.configured) {
-      writeDoc(`usersessions/${key}`, normalized).catch((error) => {
+      writePath(`sessions/${key}`, normalized).catch((error) => {
         console.error('Failed to persist session data', error)
       })
     }
@@ -296,7 +296,7 @@ export const AppProvider = ({ children }) => {
       saveJson(getSessionStorageKey(sessionKey), next)
 
       if (firebaseState.configured) {
-        writeDoc(`usersessions/${sessionKey}`, next).catch((error) => {
+        writePath(`sessions/${sessionKey}`, next).catch((error) => {
           console.error('Failed to persist session data', error)
         })
       }
@@ -312,12 +312,12 @@ export const AppProvider = ({ children }) => {
 
     setBackendMode('firebase-ready')
 
-    const unsubscribe = subscribeToDoc('app/store', (value) => {
+    const unsubscribe = subscribeToPath('store', (value) => {
       setBackendMode('firebase-live')
       if (!value) {
         const seeded = normalizeStoreData(clone(seedStoreData))
         saveJson(STORE_CACHE_KEY, seeded)
-        writeDoc('app/store', seeded).catch((error) => {
+        writePath('store', seeded).catch((error) => {
           console.error('Failed to seed Firebase store', error)
         })
         setStoreDataState(seeded)
@@ -381,11 +381,11 @@ export const AppProvider = ({ children }) => {
       return undefined
     }
 
-    const unsubscribe = subscribeToDoc(`usersessions/${sessionKey}`, (value) => {
+    const unsubscribe = subscribeToPath(`sessions/${sessionKey}`, (value) => {
       if (!value) {
         const fresh = normalizeSession(getSessionDefaults())
         saveJson(getSessionStorageKey(sessionKey), fresh)
-        writeDoc(`usersessions/${sessionKey}`, fresh).catch((error) => {
+        writePath(`sessions/${sessionKey}`, fresh).catch((error) => {
           console.error('Failed to seed user session', error)
         })
         setSessionDataState(fresh)
@@ -887,6 +887,8 @@ export const AppProvider = ({ children }) => {
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
+
+
 
 
 

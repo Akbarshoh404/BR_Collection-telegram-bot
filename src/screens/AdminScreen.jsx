@@ -75,7 +75,7 @@ const AdminScreen = () => {
   })
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '?', description: '' })
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '✨', description: '' })
   const [bannerFormData, setBannerFormData] = useState({
     eyebrow: '',
     title: '',
@@ -275,7 +275,7 @@ const AdminScreen = () => {
     }
 
     setCategories((prev) => [...prev, nextCategory])
-    setCategoryFormData({ name: '', icon: '?', description: '' })
+    setCategoryFormData({ name: '', icon: '✨', description: '' })
     setIsCategoryModalOpen(false)
   }
 
@@ -669,5 +669,6 @@ const AdminScreen = () => {
 }
 
 export default AdminScreen
+
 
 

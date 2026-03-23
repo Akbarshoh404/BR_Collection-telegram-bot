@@ -1,9 +1,10 @@
 ﻿import { getApp, getApps, initializeApp } from 'firebase/app'
-import { doc, getDoc, getFirestore, onSnapshot, setDoc } from 'firebase/firestore'
+import { getDatabase, onValue, ref, set } from 'firebase/database'
 
 const fallbackFirebaseConfig = {
   apiKey: 'AIzaSyC2euMKW0qlGc8RhB1B5saMqEjYsijmwVg',
   authDomain: 'br-collection-851fc.firebaseapp.com',
+  databaseURL: 'https://br-collection-851fc-default-rtdb.firebaseio.com',
   projectId: 'br-collection-851fc',
   storageBucket: 'br-collection-851fc.firebasestorage.app',
   messagingSenderId: '97020310664',
@@ -13,6 +14,7 @@ const fallbackFirebaseConfig = {
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || fallbackFirebaseConfig.apiKey,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || fallbackFirebaseConfig.authDomain,
+  databaseURL: (import.meta.env.VITE_FIREBASE_DATABASE_URL || fallbackFirebaseConfig.databaseURL || '').replace(/\/+$/, ''),
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || fallbackFirebaseConfig.projectId,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || fallbackFirebaseConfig.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || fallbackFirebaseConfig.messagingSenderId,
@@ -21,69 +23,47 @@ const firebaseConfig = {
 
 const firebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
+    firebaseConfig.databaseURL &&
     firebaseConfig.projectId &&
     firebaseConfig.appId,
 )
 
-let firestore = null
+let database = null
 
 if (firebaseConfigured) {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
-  firestore = getFirestore(app)
-}
-
-const toDocRef = (path) => {
-  if (!firestore || !path) {
-    return null
-  }
-
-  const segments = path.split('/').filter(Boolean)
-  if (segments.length % 2 !== 0) {
-    throw new Error(`Firestore document paths need an even number of segments. Received "${path}".`)
-  }
-
-  return doc(firestore, ...segments)
+  database = getDatabase(app)
 }
 
 export const firebaseState = {
   configured: firebaseConfigured,
-  firestore,
+  database,
   config: firebaseConfig,
 }
 
-export const subscribeToDoc = (path, callback, onError) => {
-  if (!firestore) {
+export const subscribeToPath = (path, callback, onError) => {
+  if (!database) {
     return () => {}
   }
 
-  const docRef = toDocRef(path)
-  return onSnapshot(
-    docRef,
+  const dbRef = ref(database, path)
+  return onValue(
+    dbRef,
     (snapshot) => {
-      callback(snapshot.exists() ? snapshot.data() : null)
+      callback(snapshot.val())
     },
     (error) => {
-      console.error(`Failed to subscribe to Firestore doc "${path}"`, error)
+      console.error(`Failed to subscribe to Realtime Database path "${path}"`, error)
       onError?.(error)
     },
   )
 }
 
-export const readDoc = async (path) => {
-  if (!firestore) {
-    return null
-  }
-
-  const snapshot = await getDoc(toDocRef(path))
-  return snapshot.exists() ? snapshot.data() : null
-}
-
-export const writeDoc = async (path, value, options = {}) => {
-  if (!firestore) {
+export const writePath = async (path, value) => {
+  if (!database) {
     return false
   }
 
-  await setDoc(toDocRef(path), value, { merge: Boolean(options.merge) })
+  await set(ref(database, path), value)
   return true
 }
-
